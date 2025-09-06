@@ -61,8 +61,12 @@ ws          {delim}+
 		 printf("%s : EQ\n", yytext);
 		}
 		
+"+"     {chars++; printf("%s : PLUS\n", yytext);}
+"-"     {chars++; printf("%s : MINUS\n", yytext);}
+"*"     {chars++; printf("%s : MULTIPLY\n", yytext);}
+"/"     {chars++; printf("%s : DIVIDE\n", yytext);}
 
-\n		{lines++; chars=0;}
+\r?\n		{lines++; chars=0;}
 [ \t]	{chars++;}
 .		{chars++;
          printf("%s : Unrecognized symbol at line %d char %d\n", yytext,lines,chars);

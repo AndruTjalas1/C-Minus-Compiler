@@ -1,3 +1,3 @@
 int x = 5;
 int y = 10;
-int sum = x;
+int sum = x + y;
