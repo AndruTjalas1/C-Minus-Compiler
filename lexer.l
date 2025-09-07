@@ -48,17 +48,17 @@ ws          {delim}+
 
 "int"   {words++; chars += strlen(yytext);
          printf("%s : TYPE\n", yytext);
-         // return TYPE;
+         // return INT;
         }
 
 "char"  {words++; chars += strlen(yytext);
          printf("%s : TYPE\n", yytext);
-         // return TYPE;
+         // return CHAR;
         }
 
 "write" {words++; chars += strlen(yytext);
          printf("%s : KEYWORD\n", yytext);
-         // return KEYWORD;
+         // return write;
         }
 
 {ID}    {words++; chars += strlen(yytext);
@@ -73,32 +73,33 @@ ws          {delim}+
 
 ";"     {chars++;
          printf("%s : SEMICOLON\n", yytext);
-         // return SEMICOLON;
+         // return ';';
         }
 
 "="     {chars++;
          printf("%s : EQ\n", yytext);
-         // return EQ;
+         // return '=';
         }
 
 "+"     {chars++; printf("%s : PLUS\n", yytext); 
-         // return PLUS;
+         // return '+';
         }
 
 "-"     {chars++; printf("%s : MINUS\n", yytext); 
-         // return MINUS;
+         // return '-';
         }
 
 "*"     {chars++; printf("%s : MULTIPLY\n", yytext); 
-         // return MULTIPLY;
+         // return '*';
         }
 
 "/"     {chars++; printf("%s : DIVIDE\n", yytext); 
-         // return DIVIDE;
+         // return '/';
         }
 
 \r?\n   {lines++; chars=0;}
 [ \t]   {chars++;}
+
 .       {chars++;
          printf("%s : Unrecognized symbol at line %d char %d\n", yytext, lines, chars);
         }
