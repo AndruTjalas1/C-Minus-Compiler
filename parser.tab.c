@@ -69,23 +69,22 @@
 /* First part of user prologue.  */
 #line 1 "parser.y"
 
-/* Parser with AST support - ready for full compiler pipeline */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ast.h"   /* AST node definitions */
+#include "AST.h"   /* AST node definitions */
 
 /* Lexer functions */
 extern int yylex();
 extern FILE* yyin;
 
-/* Error reporting */
-void yyerror(const char* s);
-
 /* Root of the AST */
 ASTNode* root = NULL;
 
-#line 89 "parser.tab.c"
+void yyerror(const char* s);
+
+
+#line 88 "parser.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -108,7 +107,67 @@ ASTNode* root = NULL;
 #  endif
 # endif
 
-#include "parser.tab.h"
+
+/* Debug traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int yydebug;
+#endif
+
+/* Token kinds.  */
+#ifndef YYTOKENTYPE
+# define YYTOKENTYPE
+  enum yytokentype
+  {
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    IDENTIFIER = 258,              /* IDENTIFIER  */
+    NUMBER = 259,                  /* NUMBER  */
+    TYPE = 260,                    /* TYPE  */
+    SEMICOLON = 261,               /* SEMICOLON  */
+    EQ = 262,                      /* EQ  */
+    PLUS = 263,                    /* PLUS  */
+    MINUS = 264,                   /* MINUS  */
+    MULTIPLY = 265,                /* MULTIPLY  */
+    DIVIDE = 266,                  /* DIVIDE  */
+    LBRACKET = 267,                /* LBRACKET  */
+    RBRACKET = 268,                /* RBRACKET  */
+    COMMA = 269,                   /* COMMA  */
+    KEYWORD = 270                  /* KEYWORD  */
+  };
+  typedef enum yytokentype yytoken_kind_t;
+#endif
+
+/* Value type.  */
+#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+union YYSTYPE
+{
+#line 19 "parser.y"
+
+    int num;               /* For numeric literals */
+    char* str;             /* For identifiers */
+    ASTNode* node;         /* For AST nodes */
+
+#line 156 "parser.tab.c"
+
+};
+typedef union YYSTYPE YYSTYPE;
+# define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
+#endif
+
+
+extern YYSTYPE yylval;
+
+
+int yyparse (void);
+
+
+
 /* Symbol kind.  */
 enum yysymbol_kind_t
 {
@@ -522,8 +581,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    42,    42,    46,    50,    56,    61,    66,    74,    78,
-      82,    84,    86,    88,    90
+       0,    41,    41,    42,    46,    51,    56,    61,    69,    70,
+      71,    72,    73,    74,    75
 };
 #endif
 
@@ -1099,99 +1158,97 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: program declaration  */
+#line 41 "parser.y"
+                          { root = createStmtList(root, (yyvsp[0].node)); (yyval.node) = root; }
+#line 1164 "parser.tab.c"
+    break;
+
+  case 3: /* program: %empty  */
 #line 42 "parser.y"
-                                { 
-          /* Build statement list if needed */
-          /* root = createStmtList(root, $2); */
-      }
-#line 1108 "parser.tab.c"
+                           { (yyval.node) = NULL; }
+#line 1170 "parser.tab.c"
     break;
 
   case 4: /* declaration: TYPE IDENTIFIER SEMICOLON  */
-#line 51 "parser.y"
+#line 47 "parser.y"
         { 
-          /* Create AST node for variable declaration */
-          /* $$ = createDecl($2); */
-          /* printf("Variable declaration: %s\n", $2); */
+          (yyval.node) = createDecl((yyvsp[-1].str)); 
+          printf("Variable declaration: %s\n", (yyvsp[-1].str)); 
         }
-#line 1118 "parser.tab.c"
-    break;
-
-  case 5: /* declaration: TYPE IDENTIFIER EQ expression SEMICOLON  */
-#line 57 "parser.y"
-        { 
-          /* $$ = createAssign($2, $4); */
-          /* printf("Initialized variable: %s\n", $2); */
-        }
-#line 1127 "parser.tab.c"
-    break;
-
-  case 6: /* declaration: TYPE IDENTIFIER LBRACKET NUMBER RBRACKET SEMICOLON  */
-#line 62 "parser.y"
-        { 
-          /* Could create array declaration AST node */
-          /* printf("Array declaration: %s[%d]\n", $2, $4); */
-        }
-#line 1136 "parser.tab.c"
-    break;
-
-  case 7: /* declaration: TYPE IDENTIFIER LBRACKET NUMBER RBRACKET LBRACKET NUMBER RBRACKET SEMICOLON  */
-#line 67 "parser.y"
-        { 
-          /* Could create 2D array AST node */
-          /* printf("2D Array declaration: %s[%d][%d]\n", $2, $4, $7); */
-        }
-#line 1145 "parser.tab.c"
-    break;
-
-  case 8: /* expression: NUMBER  */
-#line 75 "parser.y"
-        { 
-          /* $$ = createNum($1); */ 
-        }
-#line 1153 "parser.tab.c"
-    break;
-
-  case 9: /* expression: IDENTIFIER  */
-#line 79 "parser.y"
-        { 
-          /* $$ = createVar($1); */
-        }
-#line 1161 "parser.tab.c"
-    break;
-
-  case 10: /* expression: '(' expression ')'  */
-#line 83 "parser.y"
-        { /* $$ = $2; */ }
-#line 1167 "parser.tab.c"
-    break;
-
-  case 11: /* expression: expression PLUS expression  */
-#line 85 "parser.y"
-        { /* $$ = createBinOp('+', $1, $3); */ }
-#line 1173 "parser.tab.c"
-    break;
-
-  case 12: /* expression: expression MINUS expression  */
-#line 87 "parser.y"
-        { /* $$ = createBinOp('-', $1, $3); */ }
 #line 1179 "parser.tab.c"
     break;
 
+  case 5: /* declaration: TYPE IDENTIFIER EQ expression SEMICOLON  */
+#line 52 "parser.y"
+        { 
+          (yyval.node) = createAssign((yyvsp[-3].str), (yyvsp[-1].node));
+          printf("Initialized variable: %s\n", (yyvsp[-3].str));
+        }
+#line 1188 "parser.tab.c"
+    break;
+
+  case 6: /* declaration: TYPE IDENTIFIER LBRACKET NUMBER RBRACKET SEMICOLON  */
+#line 57 "parser.y"
+        { 
+          (yyval.node) = createArrayDecl((yyvsp[-4].str), (yyvsp[-2].num));
+          printf("Array declaration: %s[%d]\n", (yyvsp[-4].str), (yyvsp[-2].num));
+        }
+#line 1197 "parser.tab.c"
+    break;
+
+  case 7: /* declaration: TYPE IDENTIFIER LBRACKET NUMBER RBRACKET LBRACKET NUMBER RBRACKET SEMICOLON  */
+#line 62 "parser.y"
+        { 
+          (yyval.node) = create2DArrayDecl((yyvsp[-7].str), (yyvsp[-5].num), (yyvsp[-2].num));
+          printf("2D Array declaration: %s[%d][%d]\n", (yyvsp[-7].str), (yyvsp[-5].num), (yyvsp[-2].num));
+        }
+#line 1206 "parser.tab.c"
+    break;
+
+  case 8: /* expression: NUMBER  */
+#line 69 "parser.y"
+                         { (yyval.node) = createNum((yyvsp[0].num)); }
+#line 1212 "parser.tab.c"
+    break;
+
+  case 9: /* expression: IDENTIFIER  */
+#line 70 "parser.y"
+                         { (yyval.node) = createVar((yyvsp[0].str)); }
+#line 1218 "parser.tab.c"
+    break;
+
+  case 10: /* expression: '(' expression ')'  */
+#line 71 "parser.y"
+                         { (yyval.node) = (yyvsp[-1].node); }
+#line 1224 "parser.tab.c"
+    break;
+
+  case 11: /* expression: expression PLUS expression  */
+#line 72 "parser.y"
+                                     { (yyval.node) = createBinOp('+', (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1230 "parser.tab.c"
+    break;
+
+  case 12: /* expression: expression MINUS expression  */
+#line 73 "parser.y"
+                                     { (yyval.node) = createBinOp('-', (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1236 "parser.tab.c"
+    break;
+
   case 13: /* expression: expression MULTIPLY expression  */
-#line 89 "parser.y"
-        { /* $$ = createBinOp('*', $1, $3); */ }
-#line 1185 "parser.tab.c"
+#line 74 "parser.y"
+                                     { (yyval.node) = createBinOp('*', (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1242 "parser.tab.c"
     break;
 
   case 14: /* expression: expression DIVIDE expression  */
-#line 91 "parser.y"
-        { /* $$ = createBinOp('/', $1, $3); */ }
-#line 1191 "parser.tab.c"
+#line 75 "parser.y"
+                                     { (yyval.node) = createBinOp('/', (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1248 "parser.tab.c"
     break;
 
 
-#line 1195 "parser.tab.c"
+#line 1252 "parser.tab.c"
 
       default: break;
     }
@@ -1384,7 +1441,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 94 "parser.y"
+#line 78 "parser.y"
 
 
 int main(int argc, char** argv) {
@@ -1400,12 +1457,14 @@ int main(int argc, char** argv) {
 
     yyparse();
 
-    /* For testing: print AST if created */
-    /* printAST(root, 0); */
+    /* Print AST for debugging */
+    printAST(root, 0);
 
     return 0;
 }
 
+/* Error handling */
 void yyerror(const char* s) {
-    fprintf(stderr, "Syntax error: %s\n", s);
+    extern int yylineno;  // Provided by Flex
+    fprintf(stderr, "Syntax error at line %d: %s\n", yylineno, s);
 }
