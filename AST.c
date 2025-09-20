@@ -69,7 +69,13 @@ ASTNode* create2DArrayDecl(char* name, int size1, int size2) {
     return node;
 }
 
-void printAST(ASTNode* node, int indent) {
+ASTNode* createPrint(ASTNode* expr) {
+    ASTNode* node = newNode("print");
+    node->left = expr;   // expression to print
+    return node;
+}
+
+/*void printAST(ASTNode* node, int indent) {
     if (!node) return;
     for (int i = 0; i < indent; i++) printf("  ");
 
@@ -92,8 +98,10 @@ void printAST(ASTNode* node, int indent) {
         printf("Array2DDecl(%s)\n", node->name);
         printAST(node->left, indent + 1);   // print first dimension
         printAST(node->right, indent + 1);  // print second dimension
+    } else if (strcmp(node->type, "print") == 0) {
+        printf("Print\n");
+        printAST(node->left, indent + 1);
     }
 
-
     printAST(node->next, indent);
-}
+}*/

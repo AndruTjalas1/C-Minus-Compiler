@@ -44,12 +44,15 @@ NUMBER      {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "-"         { return MINUS; }
 "*"         { return MULTIPLY; }
 "/"         { return DIVIDE; }
+"("         { return LPAREN; }
+")"         { return RPAREN; }
 
 \r?\n       { /* Flex increments yylineno automatically */ }
 [ \t]       { /* ignore spaces/tabs */ }
 
 .           { 
-                printf("Unrecognized symbol '%s' at line %d\n", yytext, yylineno);
-                return 0; 
-            }
+    printf("Unrecognized symbol '%s' at line %d\n", yytext, yylineno);
+    return 0; 
+}
+
 %%

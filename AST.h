@@ -15,6 +15,7 @@ typedef struct ASTNode {
 ASTNode* createStmtList(ASTNode* list, ASTNode* stmt);
 ASTNode* createDecl(char* name);
 ASTNode* createAssign(char* name, ASTNode* expr);
+ASTNode* createPrint(ASTNode* expr);
 ASTNode* createNum(int value);
 ASTNode* createVar(char* name);
 ASTNode* createBinOp(char op, ASTNode* left, ASTNode* right);
@@ -22,6 +23,6 @@ ASTNode* createArrayDecl(char* name, int size);
 ASTNode* create2DArrayDecl(char* name, int size1, int size2);
 
 /* Debugging */
-void printAST(ASTNode* node, int indent);
+//void printAST(ASTNode* node, int indent);
 
 #endif
