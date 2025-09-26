@@ -1,5 +1,4 @@
-# Optimized Three Address Code
-# Generated from AST
+# Unoptimized Three Address Code
 
 t0 = 10
 x = t0
@@ -7,14 +6,14 @@ declare y
 declare sum
 t1 = 'B'  // ASCII 66
 apple = t1
-print t1
+print apple
 t2 = 5
 x = t2
 t3 = 10
 y = t3
-t4 = t3 + t2
+t4 = y + x
 sum = t4
-print t4
+print sum
 declare arr[5]
 t6 = 0
 t5 = 100
@@ -48,28 +47,52 @@ t24 = 1
 t25 = carr[t24]
 print t25
 declare matrix[2][3]
+t27 = 0
+t28 = 0
 t26 = 1
 matrix[t27,t28] = t26
+t30 = 0
+t31 = 1
 t29 = 2
 matrix[t30,t31] = t29
+t32 = 0
+t33 = 0
 t34 = matrix[t32,t33]
 print t34
+t35 = 0
+t36 = 1
 t37 = matrix[t35,t36]
 print t37
 declare cmatrix[2][2]
+t39 = 0
+t40 = 0
 t38 = 'M'  // ASCII 77
 cmatrix[t39,t40] = t38
+t42 = 0
+t43 = 1
 t41 = 'N'  // ASCII 78
 cmatrix[t42,t43] = t41
+t45 = 1
+t46 = 0
 t44 = 'O'  // ASCII 79
 cmatrix[t45,t46] = t44
+t48 = 1
+t49 = 1
 t47 = 'P'  // ASCII 80
 cmatrix[t48,t49] = t47
+t50 = 0
+t51 = 0
 t52 = cmatrix[t50,t51]
 print t52
+t53 = 0
+t54 = 1
 t55 = cmatrix[t53,t54]
 print t55
+t56 = 1
+t57 = 0
 t58 = cmatrix[t56,t57]
 print t58
+t59 = 1
+t60 = 1
 t61 = cmatrix[t59,t60]
 print t61

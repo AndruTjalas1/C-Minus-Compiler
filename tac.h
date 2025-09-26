@@ -38,4 +38,18 @@ void printTAC(TAC* code);     // Print TAC to stdout (for debugging)
 TAC* concatTAC(TAC* a, TAC* b);
 TAC* makeTAC(TACOp op, char* res, char* arg1, char* arg2);
 
+/* TAC Optimization Functions - integrated here */
+TAC* optimizeTAC(TAC* code);
+TAC* constantFolding(TAC* code);
+TAC* copyPropagation(TAC* code);
+TAC* deadCodeElimination(TAC* code);
+TAC* algebraicSimplification(TAC* code);
+
+/* Optimization helper functions */
+int isConstant(const char* operand);
+int getConstantValue(const char* operand);
+char* makeConstant(int value);
+int countTACInstructions(TAC* code);
+void printOptimizationStats(int originalCount, int optimizedCount);
+
 #endif

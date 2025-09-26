@@ -21,7 +21,6 @@ write(arr[0]);
 write(arr[1]);
 write(arr[0] + arr[1]);
 
-
 char carr[3];
 carr[0] = 'X';
 carr[1] = 'Y';

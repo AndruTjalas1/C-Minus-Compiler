@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "tac.h"
 #include "AST.h"
 
@@ -159,16 +160,359 @@ TAC* genTAC(ASTNode* root) {
     return code;
 }
 
+/* ========== TAC OPTIMIZATION FUNCTIONS ========== */
+
+/* Check if a string represents a constant */
+int isConstant(const char* operand) {
+    if (!operand) return 0;
+    if (operand[0] == '-' || isdigit(operand[0])) {
+        for (int i = 1; operand[i]; i++) {
+            if (!isdigit(operand[i])) return 0;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+/* Get the integer value of a constant */
+int getConstantValue(const char* operand) {
+    return atoi(operand);
+}
+
+/* Create a string representation of a constant */
+char* makeConstant(int value) {
+    char* result = malloc(16);
+    sprintf(result, "%d", value);
+    return result;
+}
+
+/* Count TAC instructions */
+int countTACInstructions(TAC* code) {
+    int count = 0;
+    TAC* cur = code;
+    while (cur) {
+        count++;
+        cur = cur->next;
+    }
+    return count;
+}
+
+/* Print optimization statistics */
+void printOptimizationStats(int originalCount, int optimizedCount) {
+    int saved = originalCount - optimizedCount;
+    double percentage = originalCount > 0 ? ((double)saved / originalCount) * 100.0 : 0.0;
+    printf("TAC Optimization Results:\n");
+    printf("  Original instructions: %d\n", originalCount);
+    printf("  Optimized instructions: %d\n", optimizedCount);
+    printf("  Instructions saved: %d (%.1f%%)\n", saved, percentage);
+}
+
+/* Constant folding optimization */
+TAC* constantFolding(TAC* code) {
+    TAC* cur = code;
+    int changes = 0;
+    
+    while (cur) {
+        if ((cur->op == TAC_ADD || cur->op == TAC_SUB || 
+             cur->op == TAC_MUL || cur->op == TAC_DIV) &&
+            isConstant(cur->arg1) && isConstant(cur->arg2)) {
+            
+            int val1 = getConstantValue(cur->arg1);
+            int val2 = getConstantValue(cur->arg2);
+            int result;
+            
+            switch (cur->op) {
+                case TAC_ADD: result = val1 + val2; break;
+                case TAC_SUB: result = val1 - val2; break;
+                case TAC_MUL: result = val1 * val2; break;
+                case TAC_DIV: 
+                    if (val2 != 0) result = val1 / val2; 
+                    else { cur = cur->next; continue; }
+                    break;
+                default: cur = cur->next; continue;
+            }
+            
+            // Replace with constant assignment
+            cur->op = TAC_NUM;
+            free(cur->arg1);
+            free(cur->arg2);
+            cur->arg1 = makeConstant(result);
+            cur->arg2 = NULL;
+            changes++;
+        }
+        cur = cur->next;
+    }
+    
+    if (changes > 0) {
+        printf("  Constant folding: %d operations simplified\n", changes);
+    }
+    return code;
+}
+
+/* Algebraic simplification */
+TAC* algebraicSimplification(TAC* code) {
+    TAC* cur = code;
+    int changes = 0;
+    
+    while (cur) {
+        if (cur->op == TAC_ADD) {
+            // x + 0 = x, 0 + x = x
+            if (isConstant(cur->arg1) && getConstantValue(cur->arg1) == 0) {
+                cur->op = TAC_ASSIGN;
+                free(cur->arg1);
+                cur->arg1 = cur->arg2;
+                cur->arg2 = NULL;
+                changes++;
+            } else if (isConstant(cur->arg2) && getConstantValue(cur->arg2) == 0) {
+                cur->op = TAC_ASSIGN;
+                free(cur->arg2);
+                cur->arg2 = NULL;
+                changes++;
+            }
+        }
+        else if (cur->op == TAC_SUB) {
+            // x - 0 = x
+            if (isConstant(cur->arg2) && getConstantValue(cur->arg2) == 0) {
+                cur->op = TAC_ASSIGN;
+                free(cur->arg2);
+                cur->arg2 = NULL;
+                changes++;
+            }
+        }
+        else if (cur->op == TAC_MUL) {
+            // x * 0 = 0, 0 * x = 0
+            if ((isConstant(cur->arg1) && getConstantValue(cur->arg1) == 0) ||
+                (isConstant(cur->arg2) && getConstantValue(cur->arg2) == 0)) {
+                cur->op = TAC_NUM;
+                free(cur->arg1);
+                free(cur->arg2);
+                cur->arg1 = makeConstant(0);
+                cur->arg2 = NULL;
+                changes++;
+            }
+            // x * 1 = x, 1 * x = x
+            else if (isConstant(cur->arg1) && getConstantValue(cur->arg1) == 1) {
+                cur->op = TAC_ASSIGN;
+                free(cur->arg1);
+                cur->arg1 = cur->arg2;
+                cur->arg2 = NULL;
+                changes++;
+            } else if (isConstant(cur->arg2) && getConstantValue(cur->arg2) == 1) {
+                cur->op = TAC_ASSIGN;
+                free(cur->arg2);
+                cur->arg2 = NULL;
+                changes++;
+            }
+        }
+        else if (cur->op == TAC_DIV) {
+            // x / 1 = x
+            if (isConstant(cur->arg2) && getConstantValue(cur->arg2) == 1) {
+                cur->op = TAC_ASSIGN;
+                free(cur->arg2);
+                cur->arg2 = NULL;
+                changes++;
+            }
+        }
+        cur = cur->next;
+    }
+    
+    if (changes > 0) {
+        printf("  Algebraic simplification: %d operations simplified\n", changes);
+    }
+    return code;
+}
+
+/* Copy propagation optimization */
+TAC* copyPropagation(TAC* code) {
+    TAC* cur = code;
+    int changes = 0;
+    
+    // Simple copy propagation: if we have t1 = t2, replace uses of t1 with t2
+    while (cur) {
+        if (cur->op == TAC_ASSIGN && cur->arg1 && !isConstant(cur->arg1)) {
+            char* target = cur->res;
+            char* source = cur->arg1;
+            
+            // Look ahead and replace uses of target with source
+            TAC* next = cur->next;
+            while (next) {
+                // Replace in arg1
+                if (next->arg1 && strcmp(next->arg1, target) == 0) {
+                    free(next->arg1);
+                    next->arg1 = strdup(source);
+                    changes++;
+                }
+                // Replace in arg2
+                if (next->arg2 && strcmp(next->arg2, target) == 0) {
+                    free(next->arg2);
+                    next->arg2 = strdup(source);
+                    changes++;
+                }
+                
+                // Stop if target is redefined
+                if (next->res && strcmp(next->res, target) == 0) {
+                    break;
+                }
+                // Stop if source is redefined
+                if (next->res && strcmp(next->res, source) == 0) {
+                    break;
+                }
+                
+                next = next->next;
+            }
+        }
+        cur = cur->next;
+    }
+    
+    if (changes > 0) {
+        printf("  Copy propagation: %d references updated\n", changes);
+    }
+    return code;
+}
+
+/* Dead code elimination */
+TAC* deadCodeElimination(TAC* code) {
+    if (!code) return NULL;
+    
+    TAC* cur = code;
+    TAC* prev = NULL;
+    int changes = 0;
+    
+    while (cur) {
+        int isDead = 0;
+        
+        // Check if this instruction defines a variable that's never used
+        if (cur->res && (cur->op == TAC_NUM || cur->op == TAC_CHAR || 
+                         cur->op == TAC_ADD || cur->op == TAC_SUB ||
+                         cur->op == TAC_MUL || cur->op == TAC_DIV ||
+                         cur->op == TAC_ASSIGN)) {
+            
+            // Check if this result is used anywhere later
+            int isUsed = 0;
+            TAC* check = cur->next;
+            while (check) {
+                if ((check->arg1 && strcmp(check->arg1, cur->res) == 0) ||
+                    (check->arg2 && strcmp(check->arg2, cur->res) == 0)) {
+                    isUsed = 1;
+                    break;
+                }
+                // If the variable is redefined, stop looking
+                if (check->res && strcmp(check->res, cur->res) == 0) {
+                    break;
+                }
+                check = check->next;
+            }
+            
+            // If it's a temporary variable (starts with 't') and not used, it's dead
+            if (!isUsed && cur->res[0] == 't' && isdigit(cur->res[1])) {
+                isDead = 1;
+            }
+        }
+        
+        if (isDead) {
+            if (prev) {
+                prev->next = cur->next;
+            } else {
+                code = cur->next;
+            }
+            TAC* toFree = cur;
+            cur = cur->next;
+            free(toFree->res);
+            free(toFree->arg1);
+            free(toFree->arg2);
+            free(toFree);
+            changes++;
+        } else {
+            prev = cur;
+            cur = cur->next;
+        }
+    }
+    
+    if (changes > 0) {
+        printf("  Dead code elimination: %d instructions removed\n", changes);
+    }
+    return code;
+}
+
+/* Main optimization function */
+TAC* optimizeTAC(TAC* code) {
+    if (!code) return NULL;
+    
+    int originalCount = countTACInstructions(code);
+    printf("\nOptimizing TAC...\n");
+    
+    // Apply optimizations multiple times until no more changes
+    int totalPasses = 0;
+    int changed;
+    
+    do {
+        totalPasses++;
+        printf("  Pass %d:\n", totalPasses);
+        changed = 0;
+        
+        int beforeCount = countTACInstructions(code);
+        
+        code = constantFolding(code);
+        code = algebraicSimplification(code);
+        code = copyPropagation(code);
+        code = deadCodeElimination(code);
+        
+        int afterCount = countTACInstructions(code);
+        if (afterCount < beforeCount) {
+            changed = 1;
+        }
+        
+    } while (changed && totalPasses < 5); // Limit to 5 passes to avoid infinite loops
+    
+    int optimizedCount = countTACInstructions(code);
+    printOptimizationStats(originalCount, optimizedCount);
+    
+    return code;
+}
+
 /* Output TAC to file */
 void generateTAC(ASTNode* root, const char* filename) {
     TAC* code = genTAC(root);
+    
+    // Generate unoptimized TAC file
+    FILE* unoptFile = fopen("tac_unoptimized.txt", "w");
+    if (unoptFile) {
+        fprintf(unoptFile, "# Unoptimized Three Address Code\n\n");
+        TAC* cur = code;
+        while (cur) {
+            switch (cur->op) {
+                case TAC_ADD: fprintf(unoptFile, "%s = %s + %s\n", cur->res, cur->arg1, cur->arg2); break;
+                case TAC_SUB: fprintf(unoptFile, "%s = %s - %s\n", cur->res, cur->arg1, cur->arg2); break;
+                case TAC_MUL: fprintf(unoptFile, "%s = %s * %s\n", cur->res, cur->arg1, cur->arg2); break;
+                case TAC_DIV: fprintf(unoptFile, "%s = %s / %s\n", cur->res, cur->arg1, cur->arg2); break;
+                case TAC_ASSIGN: fprintf(unoptFile, "%s = %s\n", cur->res, cur->arg1); break;
+                case TAC_VAR: fprintf(unoptFile, "declare %s\n", cur->res); break;
+                case TAC_NUM: fprintf(unoptFile, "%s = %s\n", cur->res, cur->arg1); break;
+                case TAC_CHAR: fprintf(unoptFile, "%s = '%c'  // ASCII %s\n", cur->res, atoi(cur->arg1), cur->arg1); break;
+                case TAC_PRINT: fprintf(unoptFile, "print %s\n", cur->arg1); break;
+                case TAC_ARRAY_DECL: fprintf(unoptFile, "declare %s[%s]\n", cur->res, cur->arg1); break;
+                case TAC_ARRAY2D_DECL: fprintf(unoptFile, "declare %s[%s][%s]\n", cur->res, cur->arg1, cur->arg2); break;
+                case TAC_ARRAY_ACCESS: fprintf(unoptFile, "%s = %s[%s]\n", cur->res, cur->arg1, cur->arg2); break;
+                case TAC_ARRAY2D_ACCESS: fprintf(unoptFile, "%s = %s[%s]\n", cur->res, cur->arg1, cur->arg2); break;
+                case TAC_ARRAY_ASSIGN: fprintf(unoptFile, "%s[%s] = %s\n", cur->res, cur->arg1, cur->arg2); break;
+                case TAC_ARRAY2D_ASSIGN: fprintf(unoptFile, "%s[%s] = %s\n", cur->res, cur->arg1, cur->arg2); break;
+            }
+            cur = cur->next;
+        }
+        fclose(unoptFile);
+    }
+    
+    // Optimize the TAC
+    code = optimizeTAC(code);
+    
+    // Generate optimized TAC file
     FILE* out = fopen(filename, "w");
     if (!out) {
         perror(filename);
         return;
     }
 
-    fprintf(out, "# Three Address Code\n");
+    fprintf(out, "# Optimized Three Address Code\n");
     fprintf(out, "# Generated from AST\n\n");
 
     TAC* cur = code;
