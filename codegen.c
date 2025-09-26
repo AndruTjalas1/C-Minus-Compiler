@@ -207,20 +207,33 @@ void generateMIPS(ASTNode* root, const char* filename) {
 
     /* Data section */
     fprintf(out, ".data\n");
+    
+    // First pass: declare all char variables and arrays
     for (int i = 0; i < symtab.count; i++) {
         Symbol* s = &symtab.vars[i];
-        if (s->dimensions == 0) {
-            // Scalar variable
-            if (s->type == 'c') {
+        if (s->type == 'c') {
+            if (s->dimensions == 0) {
+                // Scalar char variable
                 fprintf(out, "%s: .byte %d\n", s->name, s->initial_value);
             } else {
-                fprintf(out, "%s: .word %d\n", s->name, s->initial_value);
-            }
-        } else {
-            // Array - allocate space
-            if (s->type == 'c') {
+                // Char array - allocate space
                 fprintf(out, "%s: .space %d\n", s->name, s->size);
+            }
+        }
+    }
+    
+    // Add alignment for integer data
+    fprintf(out, ".align 2\n");
+    
+    // Second pass: declare all int variables and arrays
+    for (int i = 0; i < symtab.count; i++) {
+        Symbol* s = &symtab.vars[i];
+        if (s->type == 'i') {
+            if (s->dimensions == 0) {
+                // Scalar int variable
+                fprintf(out, "%s: .word %d\n", s->name, s->initial_value);
             } else {
+                // Int array - allocate space (aligned)
                 fprintf(out, "%s: .space %d\n", s->name, s->size * 4);
             }
         }

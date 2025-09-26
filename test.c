@@ -19,10 +19,8 @@ arr[1] = 200;
 
 write(arr[0]);
 write(arr[1]);
+write(arr[0] + arr[1]);
 
-int arr2[3];
-arr2[0] = 300;
-write(arr2[0]);
 
 char carr[3];
 carr[0] = 'X';
