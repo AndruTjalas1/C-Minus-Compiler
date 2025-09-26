@@ -16,6 +16,7 @@ typedef enum {
     TAC_CHAR,              // Add this for character literals
     TAC_ARRAY_DECL,
     TAC_ARRAY2D_DECL,
+    TAC_ARRAY_DECL_INIT,   // Add this for initialized arrays
     TAC_ARRAY_ACCESS,      // Add this for array access
     TAC_ARRAY2D_ACCESS,    // Add this for 2D array access
     TAC_ARRAY_ASSIGN,      // Add this for array assignment

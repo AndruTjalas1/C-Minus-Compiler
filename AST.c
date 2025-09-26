@@ -102,3 +102,19 @@ ASTNode* createArrayAssign(ASTNode* arrayAccess, ASTNode* expr) {
     node->right = expr;        // the expression to assign
     return node;
 }
+
+ASTNode* createArrayDeclInit(char* name, int size, ASTNode* initList) {
+    ASTNode* node = newNode("array_decl_init");
+    node->name = strdup(name);
+    node->value = size;        // array size
+    node->left = initList;     // initialization list
+    return node;
+}
+
+ASTNode* createInitList(ASTNode* list, ASTNode* expr) {
+    if (!list) return expr;
+    ASTNode* p = list;
+    while (p->next) p = p->next;
+    p->next = expr;
+    return list;
+}

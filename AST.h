@@ -28,6 +28,8 @@ ASTNode* create2DArrayDecl(char* name, int size1, int size2);
 ASTNode* createArrayAccess(char* name, ASTNode* index);
 ASTNode* create2DArrayAccess(char* name, ASTNode* index1, ASTNode* index2);
 ASTNode* createArrayAssign(ASTNode* arrayAccess, ASTNode* expr);
+ASTNode* createArrayDeclInit(char* name, int size, ASTNode* initList);
+ASTNode* createInitList(ASTNode* list, ASTNode* expr);
 
 /* Debugging */
 //void printAST(ASTNode* node, int indent);

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "AST.h"
+#include "ast.h"
 #include "symtab.h"
 
 extern int yylex();
@@ -11,6 +11,7 @@ extern FILE* yyin;
 ASTNode* root = NULL;
 
 void yyerror(const char* s);
+int* extractInitValues(ASTNode* initList, int* count);
 %}
 
 /* Semantic values union */
@@ -27,12 +28,12 @@ void yyerror(const char* s);
 %token <num> NUMBER
 %token <character> CHAR_LITERAL
 %token SEMICOLON EQ PLUS MINUS MULTIPLY DIVIDE
-%token LBRACKET RBRACKET COMMA KEYWORD
+%token LBRACKET RBRACKET LBRACE RBRACE COMMA KEYWORD
 %token LPAREN RPAREN
 
 /* Non-terminals with types */
 %type <node> program stmt declaration assignment expression print_stmt
-%type <node> array_access
+%type <node> array_access init_list
 
 /* Operator precedence */
 %left PLUS MINUS
@@ -65,6 +66,15 @@ declaration:
           char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
           addVar($2, 1, $4->value, varType);
           printf("Initialized variable: %s\n", $2);
+        }
+    | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET EQ LBRACE init_list RBRACE SEMICOLON
+        { 
+          int initCount;
+          int* initValues = extractInitValues($8, &initCount);
+          $$ = createArrayDeclInit($2, $4, $8);
+          char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
+          addArrayWithInit($2, $4, varType, initValues, initCount);
+          printf("Initialized array declaration: %s[%d] with %d values\n", $2, $4, initCount);
         }
     | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET SEMICOLON
         { 
@@ -126,6 +136,17 @@ array_access:
         }
     ;
 
+init_list:
+      expression
+        {
+          $$ = $1;
+        }
+    | init_list COMMA expression
+        {
+          $$ = createInitList($1, $3);
+        }
+    ;
+
 expression:
       NUMBER             { $$ = createNum($1); }
     | CHAR_LITERAL       { $$ = createChar($1); }
@@ -150,4 +171,36 @@ expression:
 void yyerror(const char* s) {
     extern int yylineno;  // Provided by Flex
     fprintf(stderr, "Syntax error at line %d: %s\n", yylineno, s);
+}
+
+/* Extract initialization values from AST init list */
+int* extractInitValues(ASTNode* initList, int* count) {
+    if (!initList) {
+        *count = 0;
+        return NULL;
+    }
+    
+    // First pass: count the values
+    *count = 0;
+    ASTNode* cur = initList;
+    while (cur) {
+        (*count)++;
+        cur = cur->next;
+    }
+    
+    // Second pass: extract the values
+    int* values = malloc((*count) * sizeof(int));
+    cur = initList;
+    int i = 0;
+    while (cur && i < *count) {
+        if (strcmp(cur->type, "num") == 0 || strcmp(cur->type, "char") == 0) {
+            values[i] = cur->value;
+        } else {
+            values[i] = 0; // default for complex expressions
+        }
+        cur = cur->next;
+        i++;
+    }
+    
+    return values;
 }

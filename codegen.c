@@ -114,6 +114,31 @@ void genStmtMips(ASTNode* node, FILE* out) {
             else
                 fprintf(out, "    sw $t0, %s\n", sym->name);  // store word
         }
+        else if (strcmp(p->type, "array_decl_init") == 0) {
+            // Handle initialized array - generate assignments
+            Symbol* sym = lookupSymbol(p->name);
+            if (!sym || !sym->initValues) {
+                p = p->next;
+                continue;
+            }
+            
+            // Generate assignments for each initialized value
+            for (int i = 0; i < sym->initCount && i < sym->dim1; i++) {
+                fprintf(out, "    li $t0, %d\n", sym->initValues[i]);
+                fprintf(out, "    li $t1, %d\n", i);  // index
+                
+                if (sym->type == 'c') {
+                    fprintf(out, "    la $t2, %s\n", sym->name);     // base address
+                    fprintf(out, "    add $t2, $t2, $t1\n");         // add index
+                    fprintf(out, "    sb $t0, 0($t2)\n");            // store byte
+                } else {
+                    fprintf(out, "    sll $t1, $t1, 2\n");           // multiply by 4
+                    fprintf(out, "    la $t2, %s\n", sym->name);     // base address
+                    fprintf(out, "    add $t2, $t2, $t1\n");         // add offset
+                    fprintf(out, "    sw $t0, 0($t2)\n");            // store word
+                }
+            }
+        }
         else if (strcmp(p->type, "array_assign") == 0) {
             // Generate code for the value to assign
             genExprMips(p->right, out);  // value in $t0

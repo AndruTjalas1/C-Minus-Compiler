@@ -11,6 +11,8 @@ typedef struct Symbol {
     char type;              // 'i' for int, 'c' for char
     int dimensions;         // 0 for scalar, 1 for 1D array, 2 for 2D array
     int dim1, dim2;         // array dimensions
+    int* initValues;        // initialization values for arrays
+    int initCount;          // number of initialization values
 } Symbol;
 
 typedef struct SymbolTable {
@@ -24,6 +26,7 @@ extern SymbolTable symtab;
 void initSymTab();
 int addVar(char* name, int size, int initial_value, char type);
 int addArray(char* name, int dim1, char type);
+int addArrayWithInit(char* name, int dim1, char type, int* initValues, int initCount);
 int add2DArray(char* name, int dim1, int dim2, char type);
 int getVarOffset(const char* name);
 int isVarDeclared(const char* name);

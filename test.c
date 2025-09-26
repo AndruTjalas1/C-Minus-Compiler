@@ -13,19 +13,13 @@ sum = y + x;
 
 write(sum);
 
-int arr[5];
-arr[0] = 100;
-arr[1] = 200;
-
+int arr[5] = {10, 20, 30, 40, 50};
+char carr[3] = {'A', 'B', 'C'};
 write(arr[0]);
 write(arr[1]);
-write(arr[0] + arr[1]);
-
-char carr[3];
-carr[0] = 'X';
-carr[1] = 'Y';
-
 write(carr[0]);
+write(carr[1]);
+write(carr[0] + carr[1]);
 write(carr[1]);
 
 int matrix[2][3];

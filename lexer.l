@@ -59,6 +59,8 @@ CHAR_LITERAL '.'
 ";"         { return SEMICOLON; }
 "["         { return LBRACKET; }
 "]"         { return RBRACKET; }
+"{"         { return LBRACE; }
+"}"         { return RBRACE; }
 ","         { return COMMA; }
 "="         { return EQ; }
 "+"         { return PLUS; }
