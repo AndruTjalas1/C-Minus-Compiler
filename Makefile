@@ -5,7 +5,7 @@ YACC = bison
 CFLAGS = -g -Wall
 
 # Target executable
-TARGET = parser
+TARGET = Compiler
 OBJS = lex.yy.o parser.tab.o main.o ast.o symtab.o codegen.o tac.o
 
 # Default rule

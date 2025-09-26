@@ -10,7 +10,7 @@ void initSymTab() {
     symtab.nextOffset = 0;
 }
 
-int addVar(char* name, int size, int initial_value) {
+int addVar(char* name, int size, int initial_value, char type) {
     if (isVarDeclared(name)) {
         return -1; // already declared
     }
@@ -23,8 +23,15 @@ int addVar(char* name, int size, int initial_value) {
     symtab.vars[symtab.count].offset = symtab.nextOffset;
     symtab.vars[symtab.count].size = size;
     symtab.vars[symtab.count].initial_value = initial_value;
+    symtab.vars[symtab.count].type = type;
 
-    symtab.nextOffset += size * 4;
+    // Update offset based on type
+    if (type == 'c') {
+        symtab.nextOffset += size;  // chars are 1 byte each
+    } else {
+        symtab.nextOffset += size * 4;  // ints are 4 bytes each
+    }
+    
     symtab.count++;
     return symtab.vars[symtab.count - 1].offset;
 }

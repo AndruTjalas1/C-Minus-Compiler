@@ -2,9 +2,9 @@
 #define AST_H
 
 typedef struct ASTNode {
-    char* type;              // e.g. "num", "var", "binop", "decl"
+    char* type;              // e.g. "num", "var", "binop", "decl", "char"
     char* name;              // for identifiers
-    int value;               // for numbers or array size
+    int value;               // for numbers, characters (as ASCII), or array size
     char op;                 // for operators
     struct ASTNode* left;    // left child
     struct ASTNode* right;   // right child
@@ -17,6 +17,7 @@ ASTNode* createDecl(char* name);
 ASTNode* createAssign(char* name, ASTNode* expr);
 ASTNode* createPrint(ASTNode* expr);
 ASTNode* createNum(int value);
+ASTNode* createChar(char c);
 ASTNode* createVar(char* name);
 ASTNode* createBinOp(char op, ASTNode* left, ASTNode* right);
 ASTNode* createArrayDecl(char* name, int size);

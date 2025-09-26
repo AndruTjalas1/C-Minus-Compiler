@@ -1,13 +1,15 @@
-int x;
+int x = 10;
 int y;
 int sum;
 
-x = 5;
+char apple = 'B';
+/*apple = 'A';*/
+
+write(apple);
+
+/*x = 5;
 y = 10;
-sum = y * x;
+sum = y + x;
 
-write(sum);
+write(sum);*/
 
-int arr[5];
-char names[10];
-int matrix[3][4];

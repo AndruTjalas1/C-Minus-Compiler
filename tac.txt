@@ -1,1 +1,2 @@
-declare x
+t0 = 10
+x = t0

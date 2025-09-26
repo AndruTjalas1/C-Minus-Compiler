@@ -3,23 +3,24 @@
 
 #define MAX_VARS 100
 
-typedef struct {
+typedef struct Symbol {
     char* name;
-    int offset;         // stack offset
-    int size;           // 1 for scalar, >1 for arrays
-    int initial_value;  // only used for scalar initialization
+    int offset;
+    int size;
+    int initial_value;
+    char type;          // 'i' for int, 'c' for char
 } Symbol;
 
-typedef struct {
+typedef struct SymbolTable {
     Symbol vars[MAX_VARS];
     int count;
-    int nextOffset;     // stack grows by 4 bytes per int
+    int nextOffset;
 } SymbolTable;
 
 extern SymbolTable symtab;
 
 void initSymTab();
-int addVar(char* name, int size, int initial_value);
+int addVar(char* name, int size, int initial_value, char type);
 int getVarOffset(char* name);
 int isVarDeclared(char* name);
 

@@ -40,6 +40,12 @@ ASTNode* createNum(int value) {
     return node;
 }
 
+ASTNode* createChar(char c) {
+    ASTNode* node = newNode("char");
+    node->value = (int)c;  // Store character as ASCII value
+    return node;
+}
+
 ASTNode* createVar(char* name) {
     ASTNode* node = newNode("var");
     node->name = strdup(name);
@@ -74,34 +80,3 @@ ASTNode* createPrint(ASTNode* expr) {
     node->left = expr;   // expression to print
     return node;
 }
-
-/*void printAST(ASTNode* node, int indent) {
-    if (!node) return;
-    for (int i = 0; i < indent; i++) printf("  ");
-
-    if (strcmp(node->type, "num") == 0) {
-        printf("Num(%d)\n", node->value);
-    } else if (strcmp(node->type, "var") == 0) {
-        printf("Var(%s)\n", node->name);
-    } else if (strcmp(node->type, "decl") == 0) {
-        printf("Decl(%s)\n", node->name);
-    } else if (strcmp(node->type, "assign") == 0) {
-        printf("Assign(%s)\n", node->name);
-        printAST(node->left, indent + 1);
-    } else if (strcmp(node->type, "binop") == 0) {
-        printf("BinOp(%c)\n", node->op);
-        printAST(node->left, indent + 1);
-        printAST(node->right, indent + 1);
-    } else if (strcmp(node->type, "array_decl") == 0) {
-        printf("ArrayDecl(%s, size=%d)\n", node->name, node->value);
-    } else if (strcmp(node->type, "array2d_decl") == 0) {
-        printf("Array2DDecl(%s)\n", node->name);
-        printAST(node->left, indent + 1);   // print first dimension
-        printAST(node->right, indent + 1);  // print second dimension
-    } else if (strcmp(node->type, "print") == 0) {
-        printf("Print\n");
-        printAST(node->left, indent + 1);
-    }
-
-    printAST(node->next, indent);
-}*/

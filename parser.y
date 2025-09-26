@@ -16,14 +16,17 @@ void yyerror(const char* s);
 /* Semantic values union */
 %union {
     int num;               /* For numeric literals */
-    char* str;             /* For identifiers */
+    char* str;             /* For identifiers and type names */
+    char character;        /* For character literals */
     ASTNode* node;         /* For AST nodes */
 }
 
 /* Tokens */
 %token <str> IDENTIFIER
+%token <str> TYPE
 %token <num> NUMBER
-%token TYPE SEMICOLON EQ PLUS MINUS MULTIPLY DIVIDE
+%token <character> CHAR_LITERAL
+%token SEMICOLON EQ PLUS MINUS MULTIPLY DIVIDE
 %token LBRACKET RBRACKET COMMA KEYWORD
 %token LPAREN RPAREN
 
@@ -51,25 +54,29 @@ declaration:
       TYPE IDENTIFIER SEMICOLON
         { 
           $$ = createDecl($2); 
-          addVar($2, 1, 0);  // default initial value 0
+          char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
+          addVar($2, 1, 0, varType);
           printf("Variable declaration: %s\n", $2); 
         }
     | TYPE IDENTIFIER EQ expression SEMICOLON
         { 
           $$ = createAssign($2, $4);
-          addVar($2, 1, $4->value); // set initial value in symbol table
+          char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
+          addVar($2, 1, $4->value, varType);
           printf("Initialized variable: %s\n", $2);
         }
     | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET SEMICOLON
         { 
           $$ = createArrayDecl($2, $4);
-          addVar($2, $4, 0);
+          char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
+          addVar($2, $4, 0, varType);
           printf("Array declaration: %s[%d]\n", $2, $4);
         }
     | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET LBRACKET NUMBER RBRACKET SEMICOLON
         { 
           $$ = create2DArrayDecl($2, $4, $7);
-          addVar($2, $4 * $7, 0);
+          char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
+          addVar($2, $4 * $7, 0, varType);
           printf("2D Array declaration: %s[%d][%d]\n", $2, $4, $7);
         }
     ;
@@ -96,6 +103,7 @@ print_stmt:
 
 expression:
       NUMBER             { $$ = createNum($1); }
+    | CHAR_LITERAL       { $$ = createChar($1); }
     | IDENTIFIER         { 
           if (!isVarDeclared($1)) {
               fprintf(stderr, "Error: variable '%s' not declared\n", $1);

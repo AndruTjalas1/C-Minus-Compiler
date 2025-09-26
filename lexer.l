@@ -5,14 +5,16 @@
 #include <stdio.h>
 #include <string.h>
 #include "AST.h"
-#include "parser.tab.h"   // Bison token definitions
+#include "parser.tab.h" // Bison token definitions
+
 #define YY_DECL int yylex()
 %}
 
-letter      [a-zA-Z]
-digit       [0-9]
-ID          {letter}({letter}|{digit})*
-NUMBER      {digit}+(\.{digit}+)?(E[+\-]?{digit}+)? 
+letter [a-zA-Z]
+digit [0-9]
+ID {letter}({letter}|{digit})*
+NUMBER {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
+CHAR_LITERAL '.'
 
 %%
 
@@ -20,20 +22,39 @@ NUMBER      {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
     int c;
     while((c = input()) != 0) {
         if(c == '*') {
-            if((c = input()) == '/')
+            if((c = input()) == '/') 
                 break;
-            else
+            else 
                 unput(c);
         }
     }
 }
 
-"int"       { return TYPE; }
-"char"      { return TYPE; }
+"int"       { 
+    yylval.str = strdup("int"); 
+    return TYPE; 
+}
+"char"      { 
+    yylval.str = strdup("char"); 
+    return TYPE; 
+}
 "write"     { return KEYWORD; }
 
-{ID}        { yylval.str = strdup(yytext); return IDENTIFIER; }
-{NUMBER}    { yylval.num = atoi(yytext); return NUMBER; }
+{ID}        { 
+    yylval.str = strdup(yytext); 
+    return IDENTIFIER; 
+}
+
+{NUMBER}    { 
+    yylval.num = atoi(yytext); 
+    return NUMBER; 
+}
+
+{CHAR_LITERAL} { 
+    // Store the character without quotes
+    yylval.character = yytext[1]; 
+    return CHAR_LITERAL; 
+}
 
 ";"         { return SEMICOLON; }
 "["         { return LBRACKET; }
@@ -51,7 +72,7 @@ NUMBER      {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 [ \t]       { /* ignore spaces/tabs */ }
 
 .           { 
-    printf("Unrecognized symbol '%s' at line %d\n", yytext, yylineno);
+    printf("Unrecognized symbol '%s' at line %d\n", yytext, yylineno); 
     return 0; 
 }
 
