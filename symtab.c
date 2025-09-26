@@ -24,6 +24,9 @@ int addVar(char* name, int size, int initial_value, char type) {
     symtab.vars[symtab.count].size = size;
     symtab.vars[symtab.count].initial_value = initial_value;
     symtab.vars[symtab.count].type = type;
+    symtab.vars[symtab.count].dimensions = 0;  // scalar
+    symtab.vars[symtab.count].dim1 = 1;
+    symtab.vars[symtab.count].dim2 = 1;
 
     // Update offset based on type
     if (type == 'c') {
@@ -36,7 +39,65 @@ int addVar(char* name, int size, int initial_value, char type) {
     return symtab.vars[symtab.count - 1].offset;
 }
 
-int getVarOffset(char* name) {
+int addArray(char* name, int dim1, char type) {
+    if (isVarDeclared(name)) {
+        return -1; // already declared
+    }
+    if (symtab.count >= MAX_VARS) {
+        fprintf(stderr, "Error: symbol table overflow\n");
+        exit(1);
+    }
+
+    symtab.vars[symtab.count].name = strdup(name);
+    symtab.vars[symtab.count].offset = symtab.nextOffset;
+    symtab.vars[symtab.count].size = dim1;
+    symtab.vars[symtab.count].initial_value = 0;
+    symtab.vars[symtab.count].type = type;
+    symtab.vars[symtab.count].dimensions = 1;  // 1D array
+    symtab.vars[symtab.count].dim1 = dim1;
+    symtab.vars[symtab.count].dim2 = 1;
+
+    // Update offset based on type
+    if (type == 'c') {
+        symtab.nextOffset += dim1;  // chars are 1 byte each
+    } else {
+        symtab.nextOffset += dim1 * 4;  // ints are 4 bytes each
+    }
+    
+    symtab.count++;
+    return symtab.vars[symtab.count - 1].offset;
+}
+
+int add2DArray(char* name, int dim1, int dim2, char type) {
+    if (isVarDeclared(name)) {
+        return -1; // already declared
+    }
+    if (symtab.count >= MAX_VARS) {
+        fprintf(stderr, "Error: symbol table overflow\n");
+        exit(1);
+    }
+
+    symtab.vars[symtab.count].name = strdup(name);
+    symtab.vars[symtab.count].offset = symtab.nextOffset;
+    symtab.vars[symtab.count].size = dim1 * dim2;
+    symtab.vars[symtab.count].initial_value = 0;
+    symtab.vars[symtab.count].type = type;
+    symtab.vars[symtab.count].dimensions = 2;  // 2D array
+    symtab.vars[symtab.count].dim1 = dim1;
+    symtab.vars[symtab.count].dim2 = dim2;
+
+    // Update offset based on type
+    if (type == 'c') {
+        symtab.nextOffset += dim1 * dim2;  // chars are 1 byte each
+    } else {
+        symtab.nextOffset += dim1 * dim2 * 4;  // ints are 4 bytes each
+    }
+    
+    symtab.count++;
+    return symtab.vars[symtab.count - 1].offset;
+}
+
+int getVarOffset(const char* name) {
     for (int i = 0; i < symtab.count; i++) {
         if (strcmp(symtab.vars[i].name, name) == 0)
             return symtab.vars[i].offset;
@@ -44,6 +105,14 @@ int getVarOffset(char* name) {
     return -1;
 }
 
-int isVarDeclared(char* name) {
+int isVarDeclared(const char* name) {
     return getVarOffset(name) != -1;
+}
+
+Symbol* getSymbol(const char* name) {
+    for (int i = 0; i < symtab.count; i++) {
+        if (strcmp(symtab.vars[i].name, name) == 0)
+            return &symtab.vars[i];
+    }
+    return NULL;
 }

@@ -10,11 +10,7 @@ Symbol* lookupSymbol(const char* name);
 
 /* Lookup helper */
 Symbol* lookupSymbol(const char* name) {
-    for (int i = 0; i < symtab.count; i++) {
-        if (strcmp(symtab.vars[i].name, name) == 0)
-            return &symtab.vars[i];
-    }
-    return NULL;
+    return getSymbol(name);
 }
 
 /* Generate MIPS for expressions */
@@ -37,6 +33,57 @@ void genExprMips(ASTNode* node, FILE* out) {
             fprintf(out, "    lb $t0, %s\n", sym->name);  // load byte
         else
             fprintf(out, "    lw $t0, %s\n", sym->name);  // load word
+    }
+    else if (strcmp(node->type, "array_access") == 0) {
+        Symbol* sym = lookupSymbol(node->name);
+        if (!sym) {
+            fprintf(stderr, "Error: undeclared array '%s'\n", node->name);
+            return;
+        }
+        
+        // Generate code for index expression
+        genExprMips(node->left, out);  // index in $t0
+        
+        // Calculate address: base + (index * element_size)
+        if (sym->type == 'c') {
+            // For char arrays: address = base + index
+            fprintf(out, "    la $t1, %s\n", sym->name);     // load base address
+            fprintf(out, "    add $t1, $t1, $t0\n");         // add index
+            fprintf(out, "    lb $t0, 0($t1)\n");            // load byte from address
+        } else {
+            // For int arrays: address = base + (index * 4)
+            fprintf(out, "    sll $t0, $t0, 2\n");           // multiply index by 4
+            fprintf(out, "    la $t1, %s\n", sym->name);     // load base address
+            fprintf(out, "    add $t1, $t1, $t0\n");         // add offset
+            fprintf(out, "    lw $t0, 0($t1)\n");            // load word from address
+        }
+    }
+    else if (strcmp(node->type, "array2d_access") == 0) {
+        Symbol* sym = lookupSymbol(node->name);
+        if (!sym) {
+            fprintf(stderr, "Error: undeclared array '%s'\n", node->name);
+            return;
+        }
+        
+        // Calculate 2D array offset: (row * col_size + col) * element_size
+        genExprMips(node->left, out);    // row index in $t0
+        fprintf(out, "    move $t2, $t0\n");              // save row index
+        fprintf(out, "    li $t3, %d\n", sym->dim2);      // column size
+        fprintf(out, "    mul $t2, $t2, $t3\n");          // row * col_size
+        
+        genExprMips(node->right, out);   // col index in $t0
+        fprintf(out, "    add $t0, $t2, $t0\n");          // row*col_size + col
+        
+        if (sym->type == 'c') {
+            fprintf(out, "    la $t1, %s\n", sym->name);   // load base address
+            fprintf(out, "    add $t1, $t1, $t0\n");       // add offset
+            fprintf(out, "    lb $t0, 0($t1)\n");          // load byte
+        } else {
+            fprintf(out, "    sll $t0, $t0, 2\n");         // multiply by 4
+            fprintf(out, "    la $t1, %s\n", sym->name);   // load base address
+            fprintf(out, "    add $t1, $t1, $t0\n");       // add offset
+            fprintf(out, "    lw $t0, 0($t1)\n");          // load word
+        }
     } 
     else if (strcmp(node->type, "binop") == 0) {
         genExprMips(node->left, out);
@@ -67,10 +114,59 @@ void genStmtMips(ASTNode* node, FILE* out) {
             else
                 fprintf(out, "    sw $t0, %s\n", sym->name);  // store word
         }
+        else if (strcmp(p->type, "array_assign") == 0) {
+            // Generate code for the value to assign
+            genExprMips(p->right, out);  // value in $t0
+            fprintf(out, "    move $t9, $t0\n");  // save value
+            
+            ASTNode* arrayAccess = p->left;
+            Symbol* sym = lookupSymbol(arrayAccess->name);
+            if (!sym) {
+                fprintf(stderr, "Error: undeclared array '%s'\n", arrayAccess->name);
+                return;
+            }
+            
+            if (strcmp(arrayAccess->type, "array_access") == 0) {
+                // 1D array assignment
+                genExprMips(arrayAccess->left, out);  // index in $t0
+                
+                if (sym->type == 'c') {
+                    fprintf(out, "    la $t1, %s\n", sym->name);     // base address
+                    fprintf(out, "    add $t1, $t1, $t0\n");         // add index
+                    fprintf(out, "    sb $t9, 0($t1)\n");            // store byte
+                } else {
+                    fprintf(out, "    sll $t0, $t0, 2\n");           // multiply by 4
+                    fprintf(out, "    la $t1, %s\n", sym->name);     // base address
+                    fprintf(out, "    add $t1, $t1, $t0\n");         // add offset
+                    fprintf(out, "    sw $t9, 0($t1)\n");            // store word
+                }
+            }
+            else if (strcmp(arrayAccess->type, "array2d_access") == 0) {
+                // 2D array assignment
+                genExprMips(arrayAccess->left, out);    // row index in $t0
+                fprintf(out, "    move $t2, $t0\n");              // save row
+                fprintf(out, "    li $t3, %d\n", sym->dim2);      // column size
+                fprintf(out, "    mul $t2, $t2, $t3\n");          // row * col_size
+                
+                genExprMips(arrayAccess->right, out);   // col index in $t0
+                fprintf(out, "    add $t0, $t2, $t0\n");          // total offset
+                
+                if (sym->type == 'c') {
+                    fprintf(out, "    la $t1, %s\n", sym->name);   // base address
+                    fprintf(out, "    add $t1, $t1, $t0\n");       // add offset
+                    fprintf(out, "    sb $t9, 0($t1)\n");          // store byte
+                } else {
+                    fprintf(out, "    sll $t0, $t0, 2\n");         // multiply by 4
+                    fprintf(out, "    la $t1, %s\n", sym->name);   // base address
+                    fprintf(out, "    add $t1, $t1, $t0\n");       // add offset
+                    fprintf(out, "    sw $t9, 0($t1)\n");          // store word
+                }
+            }
+        }
         else if (strcmp(p->type, "print") == 0) {
             genExprMips(p->left, out);
             
-            // Check if we're printing a variable to determine its type
+            // Determine what type we're printing
             if (p->left && strcmp(p->left->type, "var") == 0) {
                 Symbol* sym = lookupSymbol(p->left->name);
                 if (sym && sym->type == 'c') {
@@ -79,13 +175,20 @@ void genStmtMips(ASTNode* node, FILE* out) {
                     fprintf(out, "    move $a0, $t0\n    li $v0, 1\n    syscall\n");  // print int
                 }
             }
-            // Check if we're printing a character literal
             else if (p->left && strcmp(p->left->type, "char") == 0) {
                 fprintf(out, "    move $a0, $t0\n    li $v0, 11\n    syscall\n"); // print char
             }
-            // Default to printing as integer
+            else if (p->left && (strcmp(p->left->type, "array_access") == 0 || strcmp(p->left->type, "array2d_access") == 0)) {
+                // For array access, check the array type
+                Symbol* sym = lookupSymbol(p->left->name);
+                if (sym && sym->type == 'c') {
+                    fprintf(out, "    move $a0, $t0\n    li $v0, 11\n    syscall\n"); // print char
+                } else {
+                    fprintf(out, "    move $a0, $t0\n    li $v0, 1\n    syscall\n");  // print int
+                }
+            }
             else {
-                fprintf(out, "    move $a0, $t0\n    li $v0, 1\n    syscall\n");  // print int
+                fprintf(out, "    move $a0, $t0\n    li $v0, 1\n    syscall\n");  // default to int
             }
             
             fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n"); // newline
@@ -106,16 +209,20 @@ void generateMIPS(ASTNode* root, const char* filename) {
     fprintf(out, ".data\n");
     for (int i = 0; i < symtab.count; i++) {
         Symbol* s = &symtab.vars[i];
-        if (s->type == 'c') {
-            if (s->size == 1)
+        if (s->dimensions == 0) {
+            // Scalar variable
+            if (s->type == 'c') {
                 fprintf(out, "%s: .byte %d\n", s->name, s->initial_value);
-            else
-                fprintf(out, "%s: .space %d\n", s->name, s->size);
-        } else { // int
-            if (s->size == 1)
+            } else {
                 fprintf(out, "%s: .word %d\n", s->name, s->initial_value);
-            else
+            }
+        } else {
+            // Array - allocate space
+            if (s->type == 'c') {
+                fprintf(out, "%s: .space %d\n", s->name, s->size);
+            } else {
                 fprintf(out, "%s: .space %d\n", s->name, s->size * 4);
+            }
         }
     }
 

@@ -1,2 +1,100 @@
+# Three Address Code
+# Generated from AST
+
 t0 = 10
 x = t0
+declare y
+declare sum
+t1 = 'B'  // ASCII 66
+apple = t1
+print apple
+t2 = 5
+x = t2
+t3 = 10
+y = t3
+t4 = y + x
+sum = t4
+print sum
+declare arr[5]
+t6 = 0
+t5 = 100
+arr[t6] = t5
+t8 = 1
+t7 = 200
+arr[t8] = t7
+t9 = 0
+t10 = arr[t9]
+print t10
+t11 = 1
+t12 = arr[t11]
+print t12
+declare arr2[3]
+t14 = 0
+t13 = 300
+arr2[t14] = t13
+t15 = 0
+t16 = arr2[t15]
+print t16
+declare carr[3]
+t18 = 0
+t17 = 'X'  // ASCII 88
+carr[t18] = t17
+t20 = 1
+t19 = 'Y'  // ASCII 89
+carr[t20] = t19
+t21 = 0
+t22 = carr[t21]
+print t22
+t23 = 1
+t24 = carr[t23]
+print t24
+declare matrix[2][3]
+t26 = 0
+t27 = 0
+t25 = 1
+matrix[t26,t27] = t25
+t29 = 0
+t30 = 1
+t28 = 2
+matrix[t29,t30] = t28
+t31 = 0
+t32 = 0
+t33 = matrix[t31,t32]
+print t33
+t34 = 0
+t35 = 1
+t36 = matrix[t34,t35]
+print t36
+declare cmatrix[2][2]
+t38 = 0
+t39 = 0
+t37 = 'M'  // ASCII 77
+cmatrix[t38,t39] = t37
+t41 = 0
+t42 = 1
+t40 = 'N'  // ASCII 78
+cmatrix[t41,t42] = t40
+t44 = 1
+t45 = 0
+t43 = 'O'  // ASCII 79
+cmatrix[t44,t45] = t43
+t47 = 1
+t48 = 1
+t46 = 'P'  // ASCII 80
+cmatrix[t47,t48] = t46
+t49 = 0
+t50 = 0
+t51 = cmatrix[t49,t50]
+print t51
+t52 = 0
+t53 = 1
+t54 = cmatrix[t52,t53]
+print t54
+t55 = 1
+t56 = 0
+t57 = cmatrix[t55,t56]
+print t57
+t58 = 1
+t59 = 1
+t60 = cmatrix[t58,t59]
+print t60

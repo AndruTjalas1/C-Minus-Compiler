@@ -32,6 +32,7 @@ void yyerror(const char* s);
 
 /* Non-terminals with types */
 %type <node> program stmt declaration assignment expression print_stmt
+%type <node> array_access
 
 /* Operator precedence */
 %left PLUS MINUS
@@ -69,14 +70,14 @@ declaration:
         { 
           $$ = createArrayDecl($2, $4);
           char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
-          addVar($2, $4, 0, varType);
+          addArray($2, $4, varType);
           printf("Array declaration: %s[%d]\n", $2, $4);
         }
     | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET LBRACKET NUMBER RBRACKET SEMICOLON
         { 
           $$ = create2DArrayDecl($2, $4, $7);
           char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
-          addVar($2, $4 * $7, 0, varType);
+          add2DArray($2, $4, $7, varType);
           printf("2D Array declaration: %s[%d][%d]\n", $2, $4, $7);
         }
     ;
@@ -89,7 +90,12 @@ assignment:
               exit(1);
           }
           $$ = createAssign($1, $3); 
-          printf("Initialized variable: %s\n", $1);
+          printf("Assignment: %s\n", $1);
+        }
+    | array_access EQ expression SEMICOLON
+        {
+          $$ = createArrayAssign($1, $3);
+          printf("Array assignment\n");
         }
     ;
 
@@ -98,6 +104,25 @@ print_stmt:
         {
             $$ = createPrint($3);
             printf("Print statement created\n");
+        }
+    ;
+
+array_access:
+      IDENTIFIER LBRACKET expression RBRACKET
+        {
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          $$ = createArrayAccess($1, $3);
+        }
+    | IDENTIFIER LBRACKET expression RBRACKET LBRACKET expression RBRACKET
+        {
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          $$ = create2DArrayAccess($1, $3, $6);
         }
     ;
 
@@ -111,6 +136,7 @@ expression:
           }
           $$ = createVar($1); 
       }
+    | array_access       { $$ = $1; }
     | '(' expression ')' { $$ = $2; }
     | expression PLUS expression     { $$ = createBinOp('+', $1, $3); }
     | expression MINUS expression    { $$ = createBinOp('-', $1, $3); }

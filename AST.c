@@ -9,7 +9,7 @@ static ASTNode* newNode(const char* type) {
     node->name = NULL;
     node->value = 0;
     node->op = 0;
-    node->left = node->right = node->next = NULL;
+    node->left = node->right = node->next = node->index = NULL;
     return node;
 }
 
@@ -78,5 +78,27 @@ ASTNode* create2DArrayDecl(char* name, int size1, int size2) {
 ASTNode* createPrint(ASTNode* expr) {
     ASTNode* node = newNode("print");
     node->left = expr;   // expression to print
+    return node;
+}
+
+ASTNode* createArrayAccess(char* name, ASTNode* index) {
+    ASTNode* node = newNode("array_access");
+    node->name = strdup(name);
+    node->left = index;  // store index expression
+    return node;
+}
+
+ASTNode* create2DArrayAccess(char* name, ASTNode* index1, ASTNode* index2) {
+    ASTNode* node = newNode("array2d_access");
+    node->name = strdup(name);
+    node->left = index1;   // first dimension index
+    node->right = index2;  // second dimension index
+    return node;
+}
+
+ASTNode* createArrayAssign(ASTNode* arrayAccess, ASTNode* expr) {
+    ASTNode* node = newNode("array_assign");
+    node->left = arrayAccess;  // the array access node
+    node->right = expr;        // the expression to assign
     return node;
 }
