@@ -86,15 +86,23 @@ void genExprMips(ASTNode* node, FILE* out) {
         }
     } 
     else if (strcmp(node->type, "binop") == 0) {
+        // Save $s0 before using it
+        fprintf(out, "    sw $s0, -4($sp)\n");    // preserve $s0
+        fprintf(out, "    addiu $sp, $sp, -4\n"); // adjust stack
+
         genExprMips(node->left, out);
-        fprintf(out, "    move $t1, $t0\n");            // save left operand
-        genExprMips(node->right, out);              // right operand in $t0
+        fprintf(out, "    move $s0, $t0\n");      // save left operand in $s0
+        genExprMips(node->right, out);            // right operand in $t0
         switch (node->op) {
-            case '+': fprintf(out, "    add $t0, $t1, $t0\n"); break;
-            case '-': fprintf(out, "    sub $t0, $t1, $t0\n"); break;
-            case '*': fprintf(out, "    mul $t0, $t1, $t0\n"); break;
-            case '/': fprintf(out, "    div $t1, $t0\n    mflo $t0\n"); break;
+            case '+': fprintf(out, "    add $t0, $s0, $t0\n"); break;
+            case '-': fprintf(out, "    sub $t0, $s0, $t0\n"); break;
+            case '*': fprintf(out, "    mul $t0, $s0, $t0\n"); break;
+            case '/': fprintf(out, "    div $s0, $t0\n    mflo $t0\n"); break;
         }
+
+        // Restore $s0
+        fprintf(out, "    addiu $sp, $sp, 4\n");  // restore stack
+        fprintf(out, "    lw $s0, -4($sp)\n");    // restore $s0
     }
 }
 

@@ -6,82 +6,100 @@ declare y
 declare sum
 t1 = 'B'  // ASCII 66
 apple = t1
-print apple
-t2 = 5
-x = t2
-t3 = 10
-y = t3
-t4 = y + x
-sum = t4
-print sum
-t5 = 0
-t6 = arr[t5]
-print t6
-t7 = 1
-t8 = arr[t7]
+t2 = 'C'  // ASCII 67
+t3 = apple + t2
+print t3
+t4 = 5
+x = t4
+t5 = 10
+y = t5
+t6 = y + x
+sum = t6
+t7 = 5
+t8 = sum + t7
 print t8
-t9 = 0
-t10 = carr[t9]
-print t10
-t11 = 1
-t12 = carr[t11]
-print t12
+declare arr1[3]
+t10 = 0
+t9 = 1
+arr1[t10] = t9
+t12 = 1
+t11 = 2
+arr1[t12] = t11
+t18 = 2
 t13 = 0
-t14 = carr[t13]
+t14 = arr1[t13]
 t15 = 1
-t16 = carr[t15]
+t16 = arr1[t15]
 t17 = t14 + t16
-print t17
-t18 = 1
-t19 = carr[t18]
-print t19
-declare matrix[2][3]
+arr1[t18] = t17
+t19 = 2
+t20 = arr1[t19]
+print t20
 t21 = 0
-t22 = 0
-t20 = 1
-matrix[t21,t22] = t20
-t24 = 0
-t25 = 1
-t23 = 2
-matrix[t24,t25] = t23
-t26 = 0
-t27 = 0
-t28 = matrix[t26,t27]
+t22 = arr[t21]
+print t22
+t23 = 1
+t24 = arr[t23]
+print t24
+t25 = 0
+t26 = carr[t25]
+print t26
+t27 = 1
+t28 = carr[t27]
 print t28
 t29 = 0
-t30 = 1
-t31 = matrix[t29,t30]
-print t31
-declare cmatrix[2][2]
-t33 = 0
+t30 = carr[t29]
+print t30
+t31 = 1
+t32 = carr[t31]
+print t32
+declare matrix[2][3]
 t34 = 0
-t32 = 'M'  // ASCII 77
-cmatrix[t33,t34] = t32
-t36 = 0
-t37 = 1
-t35 = 'N'  // ASCII 78
-cmatrix[t36,t37] = t35
-t39 = 1
+t35 = 0
+t33 = 1
+matrix[t34,t35] = t33
+t37 = 0
+t38 = 1
+t36 = 2
+matrix[t37,t38] = t36
+t39 = 0
 t40 = 0
-t38 = 'O'  // ASCII 79
-cmatrix[t39,t40] = t38
-t42 = 1
+t41 = matrix[t39,t40]
+print t41
+t42 = 0
 t43 = 1
-t41 = 'P'  // ASCII 80
-cmatrix[t42,t43] = t41
-t44 = 0
-t45 = 0
-t46 = cmatrix[t44,t45]
-print t46
+t44 = matrix[t42,t43]
+print t44
+declare cmatrix[2][2]
+t46 = 0
 t47 = 0
-t48 = 1
-t49 = cmatrix[t47,t48]
-print t49
+t45 = 'M'  // ASCII 77
+cmatrix[t46,t47] = t45
+t49 = 0
 t50 = 1
-t51 = 0
-t52 = cmatrix[t50,t51]
-print t52
-t53 = 1
-t54 = 1
-t55 = cmatrix[t53,t54]
-print t55
+t48 = 'N'  // ASCII 78
+cmatrix[t49,t50] = t48
+t52 = 1
+t53 = 0
+t51 = 'O'  // ASCII 79
+cmatrix[t52,t53] = t51
+t55 = 1
+t56 = 1
+t54 = 'P'  // ASCII 80
+cmatrix[t55,t56] = t54
+t57 = 0
+t58 = 0
+t59 = cmatrix[t57,t58]
+print t59
+t60 = 0
+t61 = 1
+t62 = cmatrix[t60,t61]
+print t62
+t63 = 1
+t64 = 0
+t65 = cmatrix[t63,t64]
+print t65
+t66 = 1
+t67 = 1
+t68 = cmatrix[t66,t67]
+print t68
