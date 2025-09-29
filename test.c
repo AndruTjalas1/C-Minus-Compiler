@@ -7,6 +7,11 @@ char apple = 'B';
 
 write(apple);
 
+ char c = 'A';
+string msg = "Hello World";
+write(c);
+write(msg);
+
 x = 5;
 y = 10;
 sum = y + x;

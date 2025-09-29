@@ -12,7 +12,7 @@ void initSymTab() {
 
 int addVar(char* name, int size, int initial_value, char type) {
     if (isVarDeclared(name)) {
-        return -1; // already declared
+        return -1;
     }
     if (symtab.count >= MAX_VARS) {
         fprintf(stderr, "Error: symbol table overflow\n");
@@ -24,27 +24,26 @@ int addVar(char* name, int size, int initial_value, char type) {
     symtab.vars[symtab.count].size = size;
     symtab.vars[symtab.count].initial_value = initial_value;
     symtab.vars[symtab.count].type = type;
-    symtab.vars[symtab.count].dimensions = 0;  // scalar
+    symtab.vars[symtab.count].dimensions = 0;
     symtab.vars[symtab.count].dim1 = 1;
     symtab.vars[symtab.count].dim2 = 1;
     symtab.vars[symtab.count].initValues = NULL;
     symtab.vars[symtab.count].initCount = 0;
+    symtab.vars[symtab.count].stringValue = NULL;
 
-    // Update offset based on type
     if (type == 'c') {
-        symtab.nextOffset += size;  // chars are 1 byte each
+        symtab.nextOffset += size;
     } else {
-        symtab.nextOffset += size * 4;  // ints are 4 bytes each
+        symtab.nextOffset += size * 4;
     }
     
     symtab.count++;
-    return symtab.vars[symtab.count - 1].offset;
     return symtab.vars[symtab.count - 1].offset;
 }
 
 int addArrayWithInit(char* name, int dim1, char type, int* initValues, int initCount) {
     if (isVarDeclared(name)) {
-        return -1; // already declared
+        return -1;
     }
     if (symtab.count >= MAX_VARS) {
         fprintf(stderr, "Error: symbol table overflow\n");
@@ -56,34 +55,34 @@ int addArrayWithInit(char* name, int dim1, char type, int* initValues, int initC
     symtab.vars[symtab.count].size = dim1;
     symtab.vars[symtab.count].initial_value = 0;
     symtab.vars[symtab.count].type = type;
-    symtab.vars[symtab.count].dimensions = 1;  // 1D array
+    symtab.vars[symtab.count].dimensions = 1;
     symtab.vars[symtab.count].dim1 = dim1;
     symtab.vars[symtab.count].dim2 = 1;
+    symtab.vars[symtab.count].stringValue = NULL;
     
-    // Store initialization values
     symtab.vars[symtab.count].initValues = malloc(dim1 * sizeof(int));
     symtab.vars[symtab.count].initCount = initCount;
     for (int i = 0; i < dim1; i++) {
         if (i < initCount) {
             symtab.vars[symtab.count].initValues[i] = initValues[i];
         } else {
-            symtab.vars[symtab.count].initValues[i] = 0; // default to 0
+            symtab.vars[symtab.count].initValues[i] = 0;
         }
     }
 
-    // Update offset based on type
     if (type == 'c') {
-        symtab.nextOffset += dim1;  // chars are 1 byte each
+        symtab.nextOffset += dim1;
     } else {
-        symtab.nextOffset += dim1 * 4;  // ints are 4 bytes each
+        symtab.nextOffset += dim1 * 4;
     }
     
     symtab.count++;
+    return symtab.vars[symtab.count - 1].offset;
 }
 
 int addArray(char* name, int dim1, char type) {
     if (isVarDeclared(name)) {
-        return -1; // already declared
+        return -1;
     }
     if (symtab.count >= MAX_VARS) {
         fprintf(stderr, "Error: symbol table overflow\n");
@@ -95,17 +94,17 @@ int addArray(char* name, int dim1, char type) {
     symtab.vars[symtab.count].size = dim1;
     symtab.vars[symtab.count].initial_value = 0;
     symtab.vars[symtab.count].type = type;
-    symtab.vars[symtab.count].dimensions = 1;  // 1D array
+    symtab.vars[symtab.count].dimensions = 1;
     symtab.vars[symtab.count].dim1 = dim1;
     symtab.vars[symtab.count].dim2 = 1;
     symtab.vars[symtab.count].initValues = NULL;
     symtab.vars[symtab.count].initCount = 0;
+    symtab.vars[symtab.count].stringValue = NULL;
 
-    // Update offset based on type
     if (type == 'c') {
-        symtab.nextOffset += dim1;  // chars are 1 byte each
+        symtab.nextOffset += dim1;
     } else {
-        symtab.nextOffset += dim1 * 4;  // ints are 4 bytes each
+        symtab.nextOffset += dim1 * 4;
     }
     
     symtab.count++;
@@ -114,7 +113,7 @@ int addArray(char* name, int dim1, char type) {
 
 int add2DArray(char* name, int dim1, int dim2, char type) {
     if (isVarDeclared(name)) {
-        return -1; // already declared
+        return -1;
     }
     if (symtab.count >= MAX_VARS) {
         fprintf(stderr, "Error: symbol table overflow\n");
@@ -126,19 +125,46 @@ int add2DArray(char* name, int dim1, int dim2, char type) {
     symtab.vars[symtab.count].size = dim1 * dim2;
     symtab.vars[symtab.count].initial_value = 0;
     symtab.vars[symtab.count].type = type;
-    symtab.vars[symtab.count].dimensions = 2;  // 2D array
+    symtab.vars[symtab.count].dimensions = 2;
     symtab.vars[symtab.count].dim1 = dim1;
     symtab.vars[symtab.count].dim2 = dim2;
     symtab.vars[symtab.count].initValues = NULL;
     symtab.vars[symtab.count].initCount = 0;
+    symtab.vars[symtab.count].stringValue = NULL;
 
-    // Update offset based on type
     if (type == 'c') {
-        symtab.nextOffset += dim1 * dim2;  // chars are 1 byte each
+        symtab.nextOffset += dim1 * dim2;
     } else {
-        symtab.nextOffset += dim1 * dim2 * 4;  // ints are 4 bytes each
+        symtab.nextOffset += dim1 * dim2 * 4;
     }
     
+    symtab.count++;
+    return symtab.vars[symtab.count - 1].offset;
+}
+
+int addStringVar(char* name, char* value) {
+    if (isVarDeclared(name)) {
+        return -1;
+    }
+    if (symtab.count >= MAX_VARS) {
+        fprintf(stderr, "Error: symbol table overflow\n");
+        exit(1);
+    }
+
+    int length = strlen(value) + 1;
+    symtab.vars[symtab.count].name = strdup(name);
+    symtab.vars[symtab.count].offset = symtab.nextOffset;
+    symtab.vars[symtab.count].type = 's';
+    symtab.vars[symtab.count].dimensions = 0;
+    symtab.vars[symtab.count].size = length;
+    symtab.vars[symtab.count].initial_value = 0;
+    symtab.vars[symtab.count].dim1 = 1;
+    symtab.vars[symtab.count].dim2 = 1;
+    symtab.vars[symtab.count].initValues = NULL;
+    symtab.vars[symtab.count].initCount = 0;
+    symtab.vars[symtab.count].stringValue = strdup(value);
+    
+    symtab.nextOffset += length;
     symtab.count++;
     return symtab.vars[symtab.count - 1].offset;
 }

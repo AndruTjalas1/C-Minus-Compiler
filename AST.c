@@ -46,6 +46,15 @@ ASTNode* createChar(char c) {
     return node;
 }
 
+ASTNode* createStringDecl(char* name, char* value) {
+    ASTNode* node = newNode("string_decl");
+    node->name = strdup(name);
+    node->left = malloc(sizeof(ASTNode));
+    node->left->type = strdup("string_literal");
+    node->left->name = strdup(value);
+    return node;
+}
+
 ASTNode* createVar(char* name) {
     ASTNode* node = newNode("var");
     node->name = strdup(name);

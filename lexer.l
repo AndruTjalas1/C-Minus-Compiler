@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "AST.h"
-#include "parser.tab.h" // Bison token definitions
+#include "parser.tab.h"
 
 #define YY_DECL int yylex()
 %}
@@ -15,6 +15,7 @@ digit [0-9]
 ID {letter}({letter}|{digit})*
 NUMBER {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 CHAR_LITERAL '.'
+STRING \"[^\"]*\"
 
 %%
 
@@ -38,6 +39,10 @@ CHAR_LITERAL '.'
     yylval.str = strdup("char"); 
     return TYPE; 
 }
+"string"    { 
+    yylval.str = strdup("string"); 
+    return TYPE; 
+}
 "write"     { return KEYWORD; }
 
 {ID}        { 
@@ -51,9 +56,13 @@ CHAR_LITERAL '.'
 }
 
 {CHAR_LITERAL} { 
-    // Store the character without quotes
     yylval.character = yytext[1]; 
     return CHAR_LITERAL; 
+}
+
+{STRING}    {
+    yylval.str = strndup(yytext + 1, strlen(yytext) - 2);
+    return STRING_LITERAL;
 }
 
 ";"         { return SEMICOLON; }
@@ -70,8 +79,8 @@ CHAR_LITERAL '.'
 "("         { return LPAREN; }
 ")"         { return RPAREN; }
 
-\r?\n       { /* Flex increments yylineno automatically */ }
-[ \t]       { /* ignore spaces/tabs */ }
+\r?\n       { }
+[ \t]       { }
 
 .           { 
     printf("Unrecognized symbol '%s' at line %d\n", yytext, yylineno); 

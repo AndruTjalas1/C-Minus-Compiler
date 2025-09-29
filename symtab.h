@@ -6,13 +6,14 @@
 typedef struct Symbol {
     char* name;
     int offset;
-    int size;               // total size (for arrays: rows * cols)
+    int size;
     int initial_value;
-    char type;              // 'i' for int, 'c' for char
-    int dimensions;         // 0 for scalar, 1 for 1D array, 2 for 2D array
-    int dim1, dim2;         // array dimensions
-    int* initValues;        // initialization values for arrays
-    int initCount;          // number of initialization values
+    char type;
+    int dimensions;
+    int dim1, dim2;
+    int* initValues;
+    int initCount;
+    char* stringValue;
 } Symbol;
 
 typedef struct SymbolTable {
@@ -28,6 +29,7 @@ int addVar(char* name, int size, int initial_value, char type);
 int addArray(char* name, int dim1, char type);
 int addArrayWithInit(char* name, int dim1, char type, int* initValues, int initCount);
 int add2DArray(char* name, int dim1, int dim2, char type);
+int addStringVar(char* name, char* value);
 int getVarOffset(const char* name);
 int isVarDeclared(const char* name);
 Symbol* getSymbol(const char* name);

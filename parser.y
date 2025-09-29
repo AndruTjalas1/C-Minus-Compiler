@@ -14,28 +14,25 @@ void yyerror(const char* s);
 int* extractInitValues(ASTNode* initList, int* count);
 %}
 
-/* Semantic values union */
 %union {
-    int num;               /* For numeric literals */
-    char* str;             /* For identifiers and type names */
-    char character;        /* For character literals */
-    ASTNode* node;         /* For AST nodes */
+    int num;
+    char* str;
+    char character;
+    ASTNode* node;
 }
 
-/* Tokens */
 %token <str> IDENTIFIER
 %token <str> TYPE
 %token <num> NUMBER
 %token <character> CHAR_LITERAL
+%token <str> STRING_LITERAL
 %token SEMICOLON EQ PLUS MINUS MULTIPLY DIVIDE
 %token LBRACKET RBRACKET LBRACE RBRACE COMMA KEYWORD
 %token LPAREN RPAREN
 
-/* Non-terminals with types */
 %type <node> program stmt declaration assignment expression print_stmt
 %type <node> array_access init_list
 
-/* Operator precedence */
 %left PLUS MINUS
 %left MULTIPLY DIVIDE
 
@@ -55,15 +52,21 @@ stmt:
 declaration:
       TYPE IDENTIFIER SEMICOLON
         { 
-          $$ = createDecl($2); 
-          char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
+          $$ = createDecl($2);
+          char varType;
+          if (strcmp($1, "char") == 0) varType = 'c';
+          else if (strcmp($1, "string") == 0) varType = 's';
+          else varType = 'i';
           addVar($2, 1, 0, varType);
           printf("Variable declaration: %s\n", $2); 
         }
     | TYPE IDENTIFIER EQ expression SEMICOLON
         { 
           $$ = createAssign($2, $4);
-          char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
+          char varType;
+          if (strcmp($1, "char") == 0) varType = 'c';
+          else if (strcmp($1, "string") == 0) varType = 's';
+          else varType = 'i';
           addVar($2, 1, $4->value, varType);
           printf("Initialized variable: %s\n", $2);
         }
@@ -89,6 +92,17 @@ declaration:
           char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
           add2DArray($2, $4, $7, varType);
           printf("2D Array declaration: %s[%d][%d]\n", $2, $4, $7);
+        }
+    | TYPE IDENTIFIER EQ STRING_LITERAL SEMICOLON
+        {
+            if (strcmp($1, "string") == 0) {
+                $$ = createStringDecl($2, $4);
+                addStringVar($2, $4);
+                printf("String declaration: %s = \"%s\"\n", $2, $4);
+            } else {
+                fprintf(stderr, "Error: string literals must use 'string' type\n");
+                exit(1);
+            }
         }
     ;
 
@@ -137,14 +151,8 @@ array_access:
     ;
 
 init_list:
-      expression
-        {
-          $$ = $1;
-        }
-    | init_list COMMA expression
-        {
-          $$ = createInitList($1, $3);
-        }
+      expression       { $$ = $1; }
+    | init_list COMMA expression { $$ = createInitList($1, $3); }
     ;
 
 expression:
@@ -167,20 +175,17 @@ expression:
 
 %%
 
-/* Error handling */
 void yyerror(const char* s) {
-    extern int yylineno;  // Provided by Flex
+    extern int yylineno;
     fprintf(stderr, "Syntax error at line %d: %s\n", yylineno, s);
 }
 
-/* Extract initialization values from AST init list */
 int* extractInitValues(ASTNode* initList, int* count) {
     if (!initList) {
         *count = 0;
         return NULL;
     }
     
-    // First pass: count the values
     *count = 0;
     ASTNode* cur = initList;
     while (cur) {
@@ -188,7 +193,6 @@ int* extractInitValues(ASTNode* initList, int* count) {
         cur = cur->next;
     }
     
-    // Second pass: extract the values
     int* values = malloc((*count) * sizeof(int));
     cur = initList;
     int i = 0;
@@ -196,7 +200,7 @@ int* extractInitValues(ASTNode* initList, int* count) {
         if (strcmp(cur->type, "num") == 0 || strcmp(cur->type, "char") == 0) {
             values[i] = cur->value;
         } else {
-            values[i] = 0; // default for complex expressions
+            values[i] = 0;
         }
         cur = cur->next;
         i++;
