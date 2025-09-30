@@ -120,6 +120,15 @@ ASTNode* createArrayDeclInit(char* name, int size, ASTNode* initList) {
     return node;
 }
 
+ASTNode* create2DArrayDeclInit(char* name, int size1, int size2, ASTNode* initList) {
+    ASTNode* node = newNode("array2d_decl_init");
+    node->name = strdup(name);
+    node->left = createNum(size1);    // first dimension
+    node->right = createNum(size2);   // second dimension
+    node->index = initList;           // initialization list
+    return node;
+}
+
 ASTNode* createInitList(ASTNode* list, ASTNode* expr) {
     if (!list) return expr;
     ASTNode* p = list;

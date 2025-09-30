@@ -142,6 +142,46 @@ int add2DArray(char* name, int dim1, int dim2, char type) {
     return symtab.vars[symtab.count - 1].offset;
 }
 
+int add2DArrayWithInit(char* name, int dim1, int dim2, char type, int* initValues, int initCount) {
+    if (isVarDeclared(name)) {
+        return -1;
+    }
+    if (symtab.count >= MAX_VARS) {
+        fprintf(stderr, "Error: symbol table overflow\n");
+        exit(1);
+    }
+
+    symtab.vars[symtab.count].name = strdup(name);
+    symtab.vars[symtab.count].offset = symtab.nextOffset;
+    symtab.vars[symtab.count].size = dim1 * dim2;
+    symtab.vars[symtab.count].initial_value = 0;
+    symtab.vars[symtab.count].type = type;
+    symtab.vars[symtab.count].dimensions = 2;
+    symtab.vars[symtab.count].dim1 = dim1;
+    symtab.vars[symtab.count].dim2 = dim2;
+    symtab.vars[symtab.count].stringValue = NULL;
+    
+    // Allocate and copy initialization values
+    symtab.vars[symtab.count].initValues = malloc(dim1 * dim2 * sizeof(int));
+    symtab.vars[symtab.count].initCount = initCount;
+    for (int i = 0; i < dim1 * dim2; i++) {
+        if (i < initCount) {
+            symtab.vars[symtab.count].initValues[i] = initValues[i];
+        } else {
+            symtab.vars[symtab.count].initValues[i] = 0;
+        }
+    }
+
+    if (type == 'c') {
+        symtab.nextOffset += dim1 * dim2;
+    } else {
+        symtab.nextOffset += dim1 * dim2 * 4;
+    }
+    
+    symtab.count++;
+    return symtab.vars[symtab.count - 1].offset;
+}
+
 int addStringVar(char* name, char* value) {
     if (isVarDeclared(name)) {
         return -1;

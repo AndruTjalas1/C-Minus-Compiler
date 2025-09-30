@@ -147,6 +147,30 @@ void genStmtMips(ASTNode* node, FILE* out) {
                 }
             }
         }
+        else if (strcmp(p->type, "array2d_decl_init") == 0) {
+            Symbol* sym = lookupSymbol(p->name);
+            if (!sym || !sym->initValues) {
+                p = p->next;
+                continue;
+            }
+            
+            // Initialize 2D array elements in row-major order
+            for (int i = 0; i < sym->initCount && i < (sym->dim1 * sym->dim2); i++) {
+                fprintf(out, "    li $t0, %d\n", sym->initValues[i]);
+                fprintf(out, "    li $t1, %d\n", i);
+                
+                if (sym->type == 'c') {
+                    fprintf(out, "    la $t2, %s\n", sym->name);
+                    fprintf(out, "    add $t2, $t2, $t1\n");
+                    fprintf(out, "    sb $t0, 0($t2)\n");
+                } else {
+                    fprintf(out, "    sll $t1, $t1, 2\n");
+                    fprintf(out, "    la $t2, %s\n", sym->name);
+                    fprintf(out, "    add $t2, $t2, $t1\n");
+                    fprintf(out, "    sw $t0, 0($t2)\n");
+                }
+            }
+        }
         else if (strcmp(p->type, "array_assign") == 0) {
             genExprMips(p->right, out);
             fprintf(out, "    move $t9, $t0\n");

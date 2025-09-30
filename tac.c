@@ -149,6 +149,12 @@ TAC* genStmtTac(ASTNode* node) {
         sprintf(buf2, "%d", node->right->value);
         return makeTAC(TAC_ARRAY2D_DECL, node->name, buf1, buf2);
     }
+    else if (strcmp(node->type, "array2d_decl_init") == 0) {
+        char buf1[16], buf2[16];
+        sprintf(buf1, "%d", node->left->value);
+        sprintf(buf2, "%d", node->right->value);
+        return makeTAC(TAC_ARRAY2D_DECL_INIT, node->name, buf1, buf2);
+    }
 
     return NULL;
 }
@@ -498,6 +504,7 @@ void generateTAC(ASTNode* root, const char* filename) {
                 case TAC_ARRAY_DECL: fprintf(unoptFile, "declare %s[%s]\n", cur->res, cur->arg1); break;
                 case TAC_ARRAY_DECL_INIT: fprintf(unoptFile, "declare %s[%s] with init\n", cur->res, cur->arg1); break;
                 case TAC_ARRAY2D_DECL: fprintf(unoptFile, "declare %s[%s][%s]\n", cur->res, cur->arg1, cur->arg2); break;
+                case TAC_ARRAY2D_DECL_INIT: fprintf(unoptFile, "declare %s[%s][%s] with init\n", cur->res, cur->arg1, cur->arg2); break;
                 case TAC_ARRAY_ACCESS: fprintf(unoptFile, "%s = %s[%s]\n", cur->res, cur->arg1, cur->arg2); break;
                 case TAC_ARRAY2D_ACCESS: fprintf(unoptFile, "%s = %s[%s]\n", cur->res, cur->arg1, cur->arg2); break;
                 case TAC_ARRAY_ASSIGN: fprintf(unoptFile, "%s[%s] = %s\n", cur->res, cur->arg1, cur->arg2); break;
@@ -559,6 +566,9 @@ void generateTAC(ASTNode* root, const char* filename) {
                 break;
             case TAC_ARRAY2D_DECL: 
                 fprintf(out, "declare %s[%s][%s]\n", cur->res, cur->arg1, cur->arg2); 
+                break;
+            case TAC_ARRAY2D_DECL_INIT: 
+                fprintf(out, "declare %s[%s][%s] with init\n", cur->res, cur->arg1, cur->arg2); 
                 break;
             case TAC_ARRAY_ACCESS:
                 fprintf(out, "%s = %s[%s]\n", cur->res, cur->arg1, cur->arg2);

@@ -80,3 +80,29 @@ t62 = cmatrix[t60,t61]
 print t62
 t65 = cmatrix[t63,t64]
 print t65
+declare matrix1[3][3]
+declare matrix2[2][3] with init
+declare grid[3][2] with init
+declare sparse[2][2] with init
+t66 = 10
+matrix1[t67,t68] = t66
+t69 = 20
+matrix1[t70,t71] = t69
+t72 = 30
+matrix1[t73,t74] = t72
+t77 = matrix2[t75,t76]
+print t77
+t80 = matrix2[t78,t79]
+print t80
+t83 = matrix2[t81,t82]
+print t83
+t86 = grid[t84,t85]
+print t86
+t89 = sparse[t87,t88]
+print t89
+t92 = sparse[t90,t91]
+print t92
+t95 = matrix1[t93,t94]
+print t95
+t98 = matrix1[t96,t97]
+print t98

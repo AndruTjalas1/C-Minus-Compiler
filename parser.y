@@ -93,6 +93,15 @@ declaration:
           add2DArray($2, $4, $7, varType);
           printf("2D Array declaration: %s[%d][%d]\n", $2, $4, $7);
         }
+    | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET LBRACKET NUMBER RBRACKET EQ LBRACE init_list RBRACE SEMICOLON
+        { 
+          int initCount;
+          int* initValues = extractInitValues($11, &initCount);
+          $$ = create2DArrayDeclInit($2, $4, $7, $11);
+          char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
+          add2DArrayWithInit($2, $4, $7, varType, initValues, initCount);
+          printf("Initialized 2D array declaration: %s[%d][%d] with %d values\n", $2, $4, $7, initCount);
+        }
     | TYPE IDENTIFIER EQ STRING_LITERAL SEMICOLON
         {
             if (strcmp($1, "string") == 0) {

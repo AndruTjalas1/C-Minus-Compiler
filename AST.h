@@ -27,6 +27,7 @@ ASTNode* createArrayAccess(char* name, ASTNode* index);
 ASTNode* create2DArrayAccess(char* name, ASTNode* index1, ASTNode* index2);
 ASTNode* createArrayAssign(ASTNode* arrayAccess, ASTNode* expr);
 ASTNode* createArrayDeclInit(char* name, int size, ASTNode* initList);
+ASTNode* create2DArrayDeclInit(char* name, int size1, int size2, ASTNode* initList);
 ASTNode* createInitList(ASTNode* list, ASTNode* expr);
 
 #endif

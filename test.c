@@ -51,3 +51,36 @@ write(cmatrix[0][0]);
 write(cmatrix[0][1]);
 write(cmatrix[1][0]);
 write(cmatrix[1][1]);
+
+/* Test 2D Array Initialization */
+
+/* 1D array initialization (already working) */
+int arr1[5] = {1, 2, 3, 4, 5};
+
+/* 2D array without initialization */
+int matrix1[3][3];
+
+/* 2D array with initialization - NEW FEATURE! */
+int matrix2[2][3] = {1, 2, 3, 4, 5, 6};
+
+/* Another 2D array with initialization */
+int grid[3][2] = {10, 20, 30, 40, 50, 60};
+
+/* Partial initialization (remaining elements will be 0) */
+int sparse[2][2] = {1, 2};
+
+/* Access and assign 2D array elements */
+matrix1[0][0] = 10;
+matrix1[1][1] = 20;
+matrix1[2][2] = 30;
+
+/* Print 2D array elements */
+write(matrix2[0][0]);
+write(matrix2[0][1]);
+write(matrix2[1][2]);
+write(grid[2][1]);
+
+write(sparse[0][0]);
+write(sparse[1][1]);
+write(matrix1[0][0]);
+write(matrix1[1][1]);
