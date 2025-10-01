@@ -10,6 +10,7 @@ static ASTNode* newNode(const char* type) {
     node->value = 0;
     node->op = 0;
     node->left = node->right = node->next = node->index = NULL;
+    node->condition = node->ifBlock = node->elseifList = node->elseBlock = NULL;
     return node;
 }
 
@@ -134,5 +135,38 @@ ASTNode* createInitList(ASTNode* list, ASTNode* expr) {
     ASTNode* p = list;
     while (p->next) p = p->next;
     p->next = expr;
+    return list;
+}
+
+ASTNode* createCondition(char* op, ASTNode* left, ASTNode* right) {
+    ASTNode* node = newNode("condition");
+    node->name = strdup(op);  // store operator as name
+    node->left = left;
+    node->right = right;
+    return node;
+}
+
+ASTNode* createIf(ASTNode* condition, ASTNode* ifBlock, ASTNode* elseifList, ASTNode* elseBlock) {
+    ASTNode* node = newNode("if");
+    node->condition = condition;
+    node->ifBlock = ifBlock;
+    node->elseifList = elseifList;
+    node->elseBlock = elseBlock;
+    return node;
+}
+
+ASTNode* createElseIf(ASTNode* condition, ASTNode* block) {
+    ASTNode* node = newNode("elseif");
+    node->condition = condition;
+    node->ifBlock = block;
+    return node;
+}
+
+ASTNode* createElseIfList(ASTNode* list, ASTNode* condition, ASTNode* block) {
+    ASTNode* elseifNode = createElseIf(condition, block);
+    if (!list) return elseifNode;
+    ASTNode* p = list;
+    while (p->next) p = p->next;
+    p->next = elseifNode;
     return list;
 }

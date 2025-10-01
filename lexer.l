@@ -43,7 +43,11 @@ STRING \"[^\"]*\"
     yylval.str = strdup("string"); 
     return TYPE; 
 }
+
 "write"     { return KEYWORD; }
+"if"        { return IF; }
+"elseif"    { return ELSEIF; }
+"else"      { return ELSE; }
 
 {ID}        { 
     yylval.str = strdup(yytext); 
@@ -71,7 +75,13 @@ STRING \"[^\"]*\"
 "{"         { return LBRACE; }
 "}"         { return RBRACE; }
 ","         { return COMMA; }
+"=="        { return EQEQ; }
 "="         { return EQ; }
+"!="        { return NEQ; }
+"<"         { return LT; }
+"<="        { return LE; }
+">"         { return GT; }
+">="        { return GE; }
 "+"         { return PLUS; }
 "-"         { return MINUS; }
 "*"         { return MULTIPLY; }

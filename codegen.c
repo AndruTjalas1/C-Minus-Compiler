@@ -257,6 +257,109 @@ void genStmtMips(ASTNode* node, FILE* out) {
             
             fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n");
         }
+        else if (strcmp(p->type, "if") == 0) {
+            // Generate unique labels
+            static int labelCounter = 0;
+            char elseLabel[32], endLabel[32];
+            sprintf(elseLabel, "else_%d", labelCounter);
+            sprintf(endLabel, "endif_%d", labelCounter);
+            labelCounter++;
+            
+            // Evaluate condition left side
+            genExprMips(p->condition->left, out);
+            fprintf(out, "    move $t8, $t0\n");
+            
+            // Evaluate condition right side
+            genExprMips(p->condition->right, out);
+            fprintf(out, "    move $t9, $t0\n");
+            
+            // Compare and branch based on condition
+            char* condOp = p->condition->name;
+            if (strcmp(condOp, "==") == 0) {
+                fprintf(out, "    bne $t8, $t9, %s\n", (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
+            } else if (strcmp(condOp, "!=") == 0) {
+                fprintf(out, "    beq $t8, $t9, %s\n", (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
+            } else if (strcmp(condOp, "<") == 0) {
+                fprintf(out, "    slt $t7, $t8, $t9\n");
+                fprintf(out, "    beq $t7, $zero, %s\n", (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
+            } else if (strcmp(condOp, "<=") == 0) {
+                fprintf(out, "    slt $t7, $t9, $t8\n");
+                fprintf(out, "    bne $t7, $zero, %s\n", (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
+            } else if (strcmp(condOp, ">") == 0) {
+                fprintf(out, "    slt $t7, $t9, $t8\n");
+                fprintf(out, "    beq $t7, $zero, %s\n", (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
+            } else if (strcmp(condOp, ">=") == 0) {
+                fprintf(out, "    slt $t7, $t8, $t9\n");
+                fprintf(out, "    bne $t7, $zero, %s\n", (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
+            }
+            
+            // Generate if block
+            genStmtMips(p->ifBlock, out);
+            fprintf(out, "    j %s\n", endLabel);
+            
+            // Handle elseif chain
+            if (p->elseifList) {
+                fprintf(out, "%s:\n", elseLabel);
+                ASTNode* elseif = p->elseifList;
+                int elseifCounter = 0;
+                
+                while (elseif) {
+                    char nextLabel[32];
+                    if (elseif->next || p->elseBlock) {
+                        sprintf(nextLabel, "elseif_%d_%d", labelCounter-1, elseifCounter++);
+                    } else {
+                        strcpy(nextLabel, endLabel);
+                    }
+                    
+                    // Evaluate elseif condition
+                    genExprMips(elseif->condition->left, out);
+                    fprintf(out, "    move $t8, $t0\n");
+                    genExprMips(elseif->condition->right, out);
+                    fprintf(out, "    move $t9, $t0\n");
+                    
+                    // Compare and branch
+                    char* elseifOp = elseif->condition->name;
+                    if (strcmp(elseifOp, "==") == 0) {
+                        fprintf(out, "    bne $t8, $t9, %s\n", nextLabel);
+                    } else if (strcmp(elseifOp, "!=") == 0) {
+                        fprintf(out, "    beq $t8, $t9, %s\n", nextLabel);
+                    } else if (strcmp(elseifOp, "<") == 0) {
+                        fprintf(out, "    slt $t7, $t8, $t9\n");
+                        fprintf(out, "    beq $t7, $zero, %s\n", nextLabel);
+                    } else if (strcmp(elseifOp, "<=") == 0) {
+                        fprintf(out, "    slt $t7, $t9, $t8\n");
+                        fprintf(out, "    bne $t7, $zero, %s\n", nextLabel);
+                    } else if (strcmp(elseifOp, ">") == 0) {
+                        fprintf(out, "    slt $t7, $t9, $t8\n");
+                        fprintf(out, "    beq $t7, $zero, %s\n", nextLabel);
+                    } else if (strcmp(elseifOp, ">=") == 0) {
+                        fprintf(out, "    slt $t7, $t8, $t9\n");
+                        fprintf(out, "    bne $t7, $zero, %s\n", nextLabel);
+                    }
+                    
+                    // Generate elseif block
+                    genStmtMips(elseif->ifBlock, out);
+                    fprintf(out, "    j %s\n", endLabel);
+                    
+                    if (elseif->next || p->elseBlock) {
+                        fprintf(out, "%s:\n", nextLabel);
+                    }
+                    
+                    elseif = elseif->next;
+                }
+            }
+            
+            // Handle else block
+            if (p->elseBlock) {
+                if (!p->elseifList) {
+                    fprintf(out, "%s:\n", elseLabel);
+                }
+                genStmtMips(p->elseBlock, out);
+            }
+            
+            // End label
+            fprintf(out, "%s:\n", endLabel);
+        }
         p = p->next;
     }
 }

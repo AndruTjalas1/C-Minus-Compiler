@@ -1,6 +1,9 @@
 int x = 10;
 int y;
 int sum;
+int product;
+int difference;
+int quotient;
 
 char apple = 'B';
 /*apple = 'A';*/
@@ -15,8 +18,14 @@ write(msg);
 x = 5;
 y = 10;
 sum = y + x;
+product = y * x;
+difference = y - x;
+quotient = y / x;
 
 write(sum);
+write(product);
+write(difference);
+write(quotient);
 
 int arr1[3];
 arr1[0] = 1;
@@ -84,3 +93,21 @@ write(sparse[0][0]);
 write(sparse[1][1]);
 write(matrix1[0][0]);
 write(matrix1[1][1]);
+
+if (x > y) {
+    write(x);
+}
+
+if (x < y) {
+    write(y);
+} else {
+    write(x);
+}
+
+if (x == 5) {
+    write(1);
+} elseif (x == 10) {
+    write(2);
+} else {
+    write(3);
+}

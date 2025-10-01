@@ -6,11 +6,19 @@
 #include "AST.h"
 
 static int tempCount = 0;
+static int labelCount = 0;
 
 /* Generate a new temporary variable name */
 char* newTemp() {
     char* buf = malloc(16);
     sprintf(buf, "t%d", tempCount++);
+    return buf;
+}
+
+/* Generate a new label name */
+char* newLabel() {
+    char* buf = malloc(16);
+    sprintf(buf, "L%d", labelCount++);
     return buf;
 }
 
@@ -155,6 +163,131 @@ TAC* genStmtTac(ASTNode* node) {
         sprintf(buf2, "%d", node->right->value);
         return makeTAC(TAC_ARRAY2D_DECL_INIT, node->name, buf1, buf2);
     }
+    else if (strcmp(node->type, "if") == 0) {
+        printf("DEBUG: Processing if statement\n");
+        
+        // Safety check
+        if (!node->condition) {
+            fprintf(stderr, "Error: if statement has no condition\n");
+            return NULL;
+        }
+        
+        printf("DEBUG: If condition exists, type=%s\n", node->condition->type ? node->condition->type : "NULL");
+        
+        // Generate labels
+        char* elseLabel = newLabel();
+        char* endLabel = newLabel();
+        
+        printf("DEBUG: Generating condition left side\n");
+        // Generate condition code
+        char* leftPlace = NULL;
+        char* rightPlace = NULL;
+        TAC* leftCode = genExprTac(node->condition->left, &leftPlace);
+        
+        printf("DEBUG: Generating condition right side\n");
+        TAC* rightCode = genExprTac(node->condition->right, &rightPlace);
+        
+        printf("DEBUG: Condition operands generated\n");
+        
+        // Safety check
+        if (!leftPlace || !rightPlace) {
+            fprintf(stderr, "Error: failed to generate condition operands\n");
+            return NULL;
+        }
+        
+        // Determine which conditional jump to use
+        // NOTE: We jump to else/end when condition is FALSE
+        // So we need to invert the condition
+        TACOp condOp;
+        if (strcmp(node->condition->name, "==") == 0) condOp = TAC_IF_NEQ;  // if NOT equal, jump
+        else if (strcmp(node->condition->name, "!=") == 0) condOp = TAC_IF_EQ;  // if equal, jump
+        else if (strcmp(node->condition->name, "<") == 0) condOp = TAC_IF_GE;   // if >=, jump
+        else if (strcmp(node->condition->name, "<=") == 0) condOp = TAC_IF_GT;  // if >, jump
+        else if (strcmp(node->condition->name, ">") == 0) condOp = TAC_IF_LE;   // if <=, jump
+        else condOp = TAC_IF_LT;  // if <, jump (for >=)
+        
+        // If condition is false, jump to else/elseif/end
+        char* falseLabel = (node->elseifList || node->elseBlock) ? elseLabel : endLabel;
+        TAC* condJump = makeTAC(condOp, falseLabel, leftPlace, rightPlace);
+        
+        // Generate if block code
+        TAC* ifCode = genTAC(node->ifBlock);
+        
+        // Jump to end after if block
+        TAC* gotoEnd = makeTAC(TAC_GOTO, endLabel, NULL, NULL);
+        
+        // Start building the complete TAC
+        TAC* result = concat(leftCode, rightCode);
+        result = concat(result, condJump);
+        result = concat(result, ifCode);
+        result = concat(result, gotoEnd);
+        
+        // Handle elseif chain
+        if (node->elseifList) {
+            result = concat(result, makeTAC(TAC_LABEL, elseLabel, NULL, NULL));
+            
+            ASTNode* elseif = node->elseifList;
+            while (elseif) {
+                // Safety check
+                if (!elseif->condition) {
+                    fprintf(stderr, "Error: elseif has no condition\n");
+                    break;
+                }
+                
+                char* nextLabel = (elseif->next || node->elseBlock) ? newLabel() : endLabel;
+                
+                // Generate elseif condition
+                char* elseifLeft = NULL;
+                char* elseifRight = NULL;
+                TAC* elseifLeftCode = genExprTac(elseif->condition->left, &elseifLeft);
+                TAC* elseifRightCode = genExprTac(elseif->condition->right, &elseifRight);
+                
+                if (!elseifLeft || !elseifRight) {
+                    fprintf(stderr, "Error: failed to generate elseif condition\n");
+                    break;
+                }
+                
+                // Invert condition for jump
+                TACOp elseifOp;
+                if (strcmp(elseif->condition->name, "==") == 0) elseifOp = TAC_IF_NEQ;
+                else if (strcmp(elseif->condition->name, "!=") == 0) elseifOp = TAC_IF_EQ;
+                else if (strcmp(elseif->condition->name, "<") == 0) elseifOp = TAC_IF_GE;
+                else if (strcmp(elseif->condition->name, "<=") == 0) elseifOp = TAC_IF_GT;
+                else if (strcmp(elseif->condition->name, ">") == 0) elseifOp = TAC_IF_LE;
+                else elseifOp = TAC_IF_LT;
+                
+                TAC* elseifJump = makeTAC(elseifOp, nextLabel, elseifLeft, elseifRight);
+                TAC* elseifBlock = genTAC(elseif->ifBlock);
+                TAC* elseifGoto = makeTAC(TAC_GOTO, endLabel, NULL, NULL);
+                
+                result = concat(result, elseifLeftCode);
+                result = concat(result, elseifRightCode);
+                result = concat(result, elseifJump);
+                result = concat(result, elseifBlock);
+                result = concat(result, elseifGoto);
+                
+                if (elseif->next || node->elseBlock) {
+                    result = concat(result, makeTAC(TAC_LABEL, nextLabel, NULL, NULL));
+                }
+                
+                elseif = elseif->next;
+            }
+        }
+        
+        // Handle else block
+        if (node->elseBlock) {
+            if (!node->elseifList) {
+                result = concat(result, makeTAC(TAC_LABEL, elseLabel, NULL, NULL));
+            }
+            TAC* elseCode = genTAC(node->elseBlock);
+            result = concat(result, elseCode);
+        }
+        
+        // Add end label
+        result = concat(result, makeTAC(TAC_LABEL, endLabel, NULL, NULL));
+        
+        return result;
+    }
 
     return NULL;
 }
@@ -162,6 +295,11 @@ TAC* genStmtTac(ASTNode* node) {
 /* Generate TAC recursively for AST */
 TAC* genTAC(ASTNode* root) {
     if (!root) return NULL;
+    
+    // Debug output
+    if (root->type) {
+        printf("Generating TAC for: %s\n", root->type);
+    }
     
     TAC* code = genStmtTac(root);
     if (root->next) {
@@ -509,6 +647,14 @@ void generateTAC(ASTNode* root, const char* filename) {
                 case TAC_ARRAY2D_ACCESS: fprintf(unoptFile, "%s = %s[%s]\n", cur->res, cur->arg1, cur->arg2); break;
                 case TAC_ARRAY_ASSIGN: fprintf(unoptFile, "%s[%s] = %s\n", cur->res, cur->arg1, cur->arg2); break;
                 case TAC_ARRAY2D_ASSIGN: fprintf(unoptFile, "%s[%s] = %s\n", cur->res, cur->arg1, cur->arg2); break;
+                case TAC_LABEL: fprintf(unoptFile, "%s:\n", cur->res); break;
+                case TAC_GOTO: fprintf(unoptFile, "goto %s\n", cur->res); break;
+                case TAC_IF_EQ: fprintf(unoptFile, "if %s == %s goto %s\n", cur->arg1, cur->arg2, cur->res); break;
+                case TAC_IF_NEQ: fprintf(unoptFile, "if %s != %s goto %s\n", cur->arg1, cur->arg2, cur->res); break;
+                case TAC_IF_LT: fprintf(unoptFile, "if %s < %s goto %s\n", cur->arg1, cur->arg2, cur->res); break;
+                case TAC_IF_LE: fprintf(unoptFile, "if %s <= %s goto %s\n", cur->arg1, cur->arg2, cur->res); break;
+                case TAC_IF_GT: fprintf(unoptFile, "if %s > %s goto %s\n", cur->arg1, cur->arg2, cur->res); break;
+                case TAC_IF_GE: fprintf(unoptFile, "if %s >= %s goto %s\n", cur->arg1, cur->arg2, cur->res); break;
             }
             cur = cur->next;
         }
@@ -581,6 +727,30 @@ void generateTAC(ASTNode* root, const char* filename) {
                 break;
             case TAC_ARRAY2D_ASSIGN:
                 fprintf(out, "%s[%s] = %s\n", cur->res, cur->arg1, cur->arg2);
+                break;
+            case TAC_LABEL:
+                fprintf(out, "%s:\n", cur->res);
+                break;
+            case TAC_GOTO:
+                fprintf(out, "goto %s\n", cur->res);
+                break;
+            case TAC_IF_EQ:
+                fprintf(out, "if %s == %s goto %s\n", cur->arg1, cur->arg2, cur->res);
+                break;
+            case TAC_IF_NEQ:
+                fprintf(out, "if %s != %s goto %s\n", cur->arg1, cur->arg2, cur->res);
+                break;
+            case TAC_IF_LT:
+                fprintf(out, "if %s < %s goto %s\n", cur->arg1, cur->arg2, cur->res);
+                break;
+            case TAC_IF_LE:
+                fprintf(out, "if %s <= %s goto %s\n", cur->arg1, cur->arg2, cur->res);
+                break;
+            case TAC_IF_GT:
+                fprintf(out, "if %s > %s goto %s\n", cur->arg1, cur->arg2, cur->res);
+                break;
+            case TAC_IF_GE:
+                fprintf(out, "if %s >= %s goto %s\n", cur->arg1, cur->arg2, cur->res);
                 break;
         }
         cur = cur->next;

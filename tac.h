@@ -21,7 +21,15 @@ typedef enum {
     TAC_ARRAY_ACCESS,      // Add this for array access
     TAC_ARRAY2D_ACCESS,    // Add this for 2D array access
     TAC_ARRAY_ASSIGN,      // Add this for array assignment
-    TAC_ARRAY2D_ASSIGN     // Add this for 2D array assignment
+    TAC_ARRAY2D_ASSIGN,    // Add this for 2D array assignment
+    TAC_LABEL,             // Labels for jumps
+    TAC_GOTO,              // Unconditional jump
+    TAC_IF_EQ,             // if arg1 == arg2 goto res
+    TAC_IF_NEQ,            // if arg1 != arg2 goto res
+    TAC_IF_LT,             // if arg1 < arg2 goto res
+    TAC_IF_LE,             // if arg1 <= arg2 goto res
+    TAC_IF_GT,             // if arg1 > arg2 goto res
+    TAC_IF_GE              // if arg1 >= arg2 goto res
 } TACOp;
 
 /* TAC instruction representation */

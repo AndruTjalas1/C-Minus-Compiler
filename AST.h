@@ -10,6 +10,10 @@ typedef struct ASTNode {
     struct ASTNode* right;
     struct ASTNode* next;
     struct ASTNode* index;
+    struct ASTNode* condition;
+    struct ASTNode* ifBlock;
+    struct ASTNode* elseifList;
+    struct ASTNode* elseBlock;
 } ASTNode;
 
 ASTNode* createStmtList(ASTNode* list, ASTNode* stmt);
@@ -29,5 +33,9 @@ ASTNode* createArrayAssign(ASTNode* arrayAccess, ASTNode* expr);
 ASTNode* createArrayDeclInit(char* name, int size, ASTNode* initList);
 ASTNode* create2DArrayDeclInit(char* name, int size1, int size2, ASTNode* initList);
 ASTNode* createInitList(ASTNode* list, ASTNode* expr);
+ASTNode* createCondition(char* op, ASTNode* left, ASTNode* right);
+ASTNode* createIf(ASTNode* condition, ASTNode* ifBlock, ASTNode* elseifList, ASTNode* elseBlock);
+ASTNode* createElseIf(ASTNode* condition, ASTNode* block);
+ASTNode* createElseIfList(ASTNode* list, ASTNode* condition, ASTNode* block);
 
 #endif

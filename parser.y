@@ -29,10 +29,14 @@ int* extractInitValues(ASTNode* initList, int* count);
 %token SEMICOLON EQ PLUS MINUS MULTIPLY DIVIDE
 %token LBRACKET RBRACKET LBRACE RBRACE COMMA KEYWORD
 %token LPAREN RPAREN
+%token IF ELSEIF ELSE
+%token EQEQ NEQ LT LE GT GE
 
 %type <node> program stmt declaration assignment expression print_stmt
-%type <node> array_access init_list
+%type <node> array_access init_list if_stmt condition stmt_block elseif_list stmt_list
 
+%left EQEQ NEQ
+%left LT LE GT GE
 %left PLUS MINUS
 %left MULTIPLY DIVIDE
 
@@ -47,6 +51,7 @@ stmt:
       declaration
     | assignment
     | print_stmt
+    | if_stmt
     ;
 
 declaration:
@@ -162,6 +167,59 @@ array_access:
 init_list:
       expression       { $$ = $1; }
     | init_list COMMA expression { $$ = createInitList($1, $3); }
+    ;
+
+if_stmt:
+      IF LPAREN condition RPAREN stmt_block
+        {
+          $$ = createIf($3, $5, NULL, NULL);
+          printf("If statement created\n");
+        }
+    | IF LPAREN condition RPAREN stmt_block ELSE stmt_block
+        {
+          $$ = createIf($3, $5, NULL, $7);
+          printf("If-else statement created\n");
+        }
+    | IF LPAREN condition RPAREN stmt_block elseif_list
+        {
+          $$ = createIf($3, $5, $6, NULL);
+          printf("If-elseif statement created\n");
+        }
+    | IF LPAREN condition RPAREN stmt_block elseif_list ELSE stmt_block
+        {
+          $$ = createIf($3, $5, $6, $8);
+          printf("If-elseif-else statement created\n");
+        }
+    ;
+
+elseif_list:
+      ELSEIF LPAREN condition RPAREN stmt_block
+        {
+          $$ = createElseIf($3, $5);
+        }
+    | elseif_list ELSEIF LPAREN condition RPAREN stmt_block
+        {
+          $$ = createElseIfList($1, $4, $6);
+        }
+    ;
+
+stmt_list:
+      stmt  { $$ = $1; }
+    | stmt_list stmt { $$ = createStmtList($1, $2); }
+    ;
+
+stmt_block:
+      LBRACE stmt_list RBRACE  { $$ = $2; }
+    | stmt                     { $$ = $1; }
+    ;
+
+condition:
+      expression EQEQ expression { $$ = createCondition("==", $1, $3); }
+    | expression NEQ expression  { $$ = createCondition("!=", $1, $3); }
+    | expression LT expression   { $$ = createCondition("<", $1, $3); }
+    | expression LE expression   { $$ = createCondition("<=", $1, $3); }
+    | expression GT expression   { $$ = createCondition(">", $1, $3); }
+    | expression GE expression   { $$ = createCondition(">=", $1, $3); }
     ;
 
 expression:
