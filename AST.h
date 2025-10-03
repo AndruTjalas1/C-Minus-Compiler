@@ -16,6 +16,13 @@ typedef struct ASTNode {
     struct ASTNode* elseBlock;
 } ASTNode;
 
+// Memory pool functions
+void init_ast_memory();
+void* ast_alloc(size_t size);
+void print_ast_memory_stats();
+void free_ast_memory();
+
+// AST node creation functions
 ASTNode* createStmtList(ASTNode* list, ASTNode* stmt);
 ASTNode* createDecl(char* name);
 ASTNode* createAssign(char* name, ASTNode* expr);

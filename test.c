@@ -17,7 +17,7 @@ write(msg);
 
 x = 5;
 y = 10;
-sum = y + x;
+sum = y - x * 6 / 3;
 product = y * x;
 difference = y - x;
 quotient = y / x;

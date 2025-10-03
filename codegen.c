@@ -374,30 +374,38 @@ void generateMIPS(ASTNode* root, const char* filename) {
 
     fprintf(out, ".data\n");
 
-    for (int i = 0; i < symtab.count; i++) {
-        Symbol* s = &symtab.vars[i];
-        if (s->stringValue) {
-            fprintf(out, "%s: .asciiz \"%s\"\n", s->name, s->stringValue);
-        }
-        else if (s->type == 'c') {
-            if (s->dimensions == 0) {
-                fprintf(out, "%s: .byte %d\n", s->name, s->initial_value);
-            } else {
-                fprintf(out, "%s: .space %d\n", s->name, s->size);
+    // Iterate through hash table buckets for string and char declarations
+    for (int i = 0; i < HASH_SIZE; i++) {
+        Symbol* s = symtab.buckets[i];
+        while (s) {
+            if (s->stringValue) {
+                fprintf(out, "%s: .asciiz \"%s\"\n", s->name, s->stringValue);
             }
+            else if (s->type == 'c') {
+                if (s->dimensions == 0) {
+                    fprintf(out, "%s: .byte %d\n", s->name, s->initial_value);
+                } else {
+                    fprintf(out, "%s: .space %d\n", s->name, s->size);
+                }
+            }
+            s = s->next;
         }
     }
     
     fprintf(out, ".align 2\n");
     
-    for (int i = 0; i < symtab.count; i++) {
-        Symbol* s = &symtab.vars[i];
-        if (s->type == 'i') {
-            if (s->dimensions == 0) {
-                fprintf(out, "%s: .word %d\n", s->name, s->initial_value);
-            } else {
-                fprintf(out, "%s: .space %d\n", s->name, s->size * 4);
+    // Iterate through hash table buckets for int declarations
+    for (int i = 0; i < HASH_SIZE; i++) {
+        Symbol* s = symtab.buckets[i];
+        while (s) {
+            if (s->type == 'i') {
+                if (s->dimensions == 0) {
+                    fprintf(out, "%s: .word %d\n", s->name, s->initial_value);
+                } else {
+                    fprintf(out, "%s: .space %d\n", s->name, s->size * 4);
+                }
             }
+            s = s->next;
         }
     }
 
