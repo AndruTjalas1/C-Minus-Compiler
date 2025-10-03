@@ -31,10 +31,15 @@ int* extractInitValues(ASTNode* initList, int* count);
 %token LPAREN RPAREN
 %token IF ELSEIF ELSE
 %token EQEQ NEQ LT LE GT GE
+%token AND OR NOT XOR
 
 %type <node> program stmt declaration assignment expression print_stmt
 %type <node> array_access init_list if_stmt condition stmt_block elseif_list stmt_list
 
+%left OR
+%left XOR
+%left AND
+%right NOT
 %left EQEQ NEQ
 %left LT LE GT GE
 %left PLUS MINUS
@@ -220,6 +225,11 @@ condition:
     | expression LE expression   { $$ = createCondition("<=", $1, $3); }
     | expression GT expression   { $$ = createCondition(">", $1, $3); }
     | expression GE expression   { $$ = createCondition(">=", $1, $3); }
+    | condition AND condition    { $$ = createCondition("&&", $1, $3); }
+    | condition OR condition     { $$ = createCondition("||", $1, $3); }
+    | condition XOR condition    { $$ = createCondition("xor", $1, $3); }
+    | NOT condition              { $$ = createCondition("!", $2, NULL); }
+    | LPAREN condition RPAREN    { $$ = $2; }
     ;
 
 expression:

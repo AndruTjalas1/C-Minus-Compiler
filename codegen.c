@@ -7,6 +7,7 @@
 void genExprMips(ASTNode* node, FILE* out);
 void genStmtMips(ASTNode* node, FILE* out);
 Symbol* lookupSymbol(const char* name);
+void genConditionMips(ASTNode* condition, FILE* out, const char* jumpLabel);
 
 /* Lookup helper */
 Symbol* lookupSymbol(const char* name) {
@@ -102,6 +103,124 @@ void genExprMips(ASTNode* node, FILE* out) {
 
         fprintf(out, "    addiu $sp, $sp, 4\n");
         fprintf(out, "    lw $s0, -4($sp)\n");
+    }
+}
+
+/* Generate MIPS for conditions with logical operators */
+void genConditionMips(ASTNode* condition, FILE* out, const char* jumpLabel) {
+    if (!condition) return;
+    
+    char* condOp = condition->name;
+    
+    // Handle logical NOT
+    if (strcmp(condOp, "!") == 0) {
+        static int notCounter = 0;
+        char trueLabel[32];
+        sprintf(trueLabel, "not_true_%d", notCounter++);
+        
+        genConditionMips(condition->left, out, trueLabel);
+        fprintf(out, "    j %s\n", jumpLabel);
+        fprintf(out, "%s:\n", trueLabel);
+        return;
+    }
+    
+    // Handle logical AND
+    if (strcmp(condOp, "&&") == 0) {
+        genConditionMips(condition->left, out, jumpLabel);
+        genConditionMips(condition->right, out, jumpLabel);
+        return;
+    }
+    
+    // Handle logical OR
+    if (strcmp(condOp, "||") == 0) {
+        static int orCounter = 0;
+        char trueLabel[32];
+        sprintf(trueLabel, "or_true_%d", orCounter++);
+        
+        genConditionMips(condition->left, out, trueLabel);
+        genConditionMips(condition->right, out, jumpLabel);
+        fprintf(out, "%s:\n", trueLabel);
+        return;
+    }
+    
+    // Handle logical XOR
+    if (strcmp(condOp, "^") == 0) {
+        // Evaluate left condition
+        genExprMips(condition->left->left, out);
+        fprintf(out, "    move $t8, $t0\n");
+        genExprMips(condition->left->right, out);
+        fprintf(out, "    move $t9, $t0\n");
+        
+        char* leftOp = condition->left->name;
+        fprintf(out, "    # Evaluate left XOR condition\n");
+        if (strcmp(leftOp, "==") == 0) {
+            fprintf(out, "    seq $t6, $t8, $t9\n");
+        } else if (strcmp(leftOp, "!=") == 0) {
+            fprintf(out, "    sne $t6, $t8, $t9\n");
+        } else if (strcmp(leftOp, "<") == 0) {
+            fprintf(out, "    slt $t6, $t8, $t9\n");
+        } else if (strcmp(leftOp, "<=") == 0) {
+            fprintf(out, "    slt $t7, $t9, $t8\n");
+            fprintf(out, "    xori $t6, $t7, 1\n");
+        } else if (strcmp(leftOp, ">") == 0) {
+            fprintf(out, "    slt $t6, $t9, $t8\n");
+        } else if (strcmp(leftOp, ">=") == 0) {
+            fprintf(out, "    slt $t7, $t8, $t9\n");
+            fprintf(out, "    xori $t6, $t7, 1\n");
+        }
+        
+        // Evaluate right condition
+        genExprMips(condition->right->left, out);
+        fprintf(out, "    move $t8, $t0\n");
+        genExprMips(condition->right->right, out);
+        fprintf(out, "    move $t9, $t0\n");
+        
+        char* rightOp = condition->right->name;
+        fprintf(out, "    # Evaluate right XOR condition\n");
+        if (strcmp(rightOp, "==") == 0) {
+            fprintf(out, "    seq $t7, $t8, $t9\n");
+        } else if (strcmp(rightOp, "!=") == 0) {
+            fprintf(out, "    sne $t7, $t8, $t9\n");
+        } else if (strcmp(rightOp, "<") == 0) {
+            fprintf(out, "    slt $t7, $t8, $t9\n");
+        } else if (strcmp(rightOp, "<=") == 0) {
+            fprintf(out, "    slt $t5, $t9, $t8\n");
+            fprintf(out, "    xori $t7, $t5, 1\n");
+        } else if (strcmp(rightOp, ">") == 0) {
+            fprintf(out, "    slt $t7, $t9, $t8\n");
+        } else if (strcmp(rightOp, ">=") == 0) {
+            fprintf(out, "    slt $t5, $t8, $t9\n");
+            fprintf(out, "    xori $t7, $t5, 1\n");
+        }
+        
+        // XOR the two boolean results
+        fprintf(out, "    xor $t6, $t6, $t7\n");
+        fprintf(out, "    beq $t6, $zero, %s\n", jumpLabel);
+        return;
+    }
+    
+    // Handle basic comparison operators
+    genExprMips(condition->left, out);
+    fprintf(out, "    move $t8, $t0\n");
+    genExprMips(condition->right, out);
+    fprintf(out, "    move $t9, $t0\n");
+    
+    if (strcmp(condOp, "==") == 0) {
+        fprintf(out, "    bne $t8, $t9, %s\n", jumpLabel);
+    } else if (strcmp(condOp, "!=") == 0) {
+        fprintf(out, "    beq $t8, $t9, %s\n", jumpLabel);
+    } else if (strcmp(condOp, "<") == 0) {
+        fprintf(out, "    slt $t7, $t8, $t9\n");
+        fprintf(out, "    beq $t7, $zero, %s\n", jumpLabel);
+    } else if (strcmp(condOp, "<=") == 0) {
+        fprintf(out, "    slt $t7, $t9, $t8\n");
+        fprintf(out, "    bne $t7, $zero, %s\n", jumpLabel);
+    } else if (strcmp(condOp, ">") == 0) {
+        fprintf(out, "    slt $t7, $t9, $t8\n");
+        fprintf(out, "    beq $t7, $zero, %s\n", jumpLabel);
+    } else if (strcmp(condOp, ">=") == 0) {
+        fprintf(out, "    slt $t7, $t8, $t9\n");
+        fprintf(out, "    bne $t7, $zero, %s\n", jumpLabel);
     }
 }
 
@@ -265,33 +384,8 @@ void genStmtMips(ASTNode* node, FILE* out) {
             sprintf(endLabel, "endif_%d", labelCounter);
             labelCounter++;
             
-            // Evaluate condition left side
-            genExprMips(p->condition->left, out);
-            fprintf(out, "    move $t8, $t0\n");
-            
-            // Evaluate condition right side
-            genExprMips(p->condition->right, out);
-            fprintf(out, "    move $t9, $t0\n");
-            
-            // Compare and branch based on condition
-            char* condOp = p->condition->name;
-            if (strcmp(condOp, "==") == 0) {
-                fprintf(out, "    bne $t8, $t9, %s\n", (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
-            } else if (strcmp(condOp, "!=") == 0) {
-                fprintf(out, "    beq $t8, $t9, %s\n", (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
-            } else if (strcmp(condOp, "<") == 0) {
-                fprintf(out, "    slt $t7, $t8, $t9\n");
-                fprintf(out, "    beq $t7, $zero, %s\n", (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
-            } else if (strcmp(condOp, "<=") == 0) {
-                fprintf(out, "    slt $t7, $t9, $t8\n");
-                fprintf(out, "    bne $t7, $zero, %s\n", (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
-            } else if (strcmp(condOp, ">") == 0) {
-                fprintf(out, "    slt $t7, $t9, $t8\n");
-                fprintf(out, "    beq $t7, $zero, %s\n", (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
-            } else if (strcmp(condOp, ">=") == 0) {
-                fprintf(out, "    slt $t7, $t8, $t9\n");
-                fprintf(out, "    bne $t7, $zero, %s\n", (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
-            }
+            // Use new condition generation function
+            genConditionMips(p->condition, out, (p->elseifList || p->elseBlock) ? elseLabel : endLabel);
             
             // Generate if block
             genStmtMips(p->ifBlock, out);
@@ -311,31 +405,8 @@ void genStmtMips(ASTNode* node, FILE* out) {
                         strcpy(nextLabel, endLabel);
                     }
                     
-                    // Evaluate elseif condition
-                    genExprMips(elseif->condition->left, out);
-                    fprintf(out, "    move $t8, $t0\n");
-                    genExprMips(elseif->condition->right, out);
-                    fprintf(out, "    move $t9, $t0\n");
-                    
-                    // Compare and branch
-                    char* elseifOp = elseif->condition->name;
-                    if (strcmp(elseifOp, "==") == 0) {
-                        fprintf(out, "    bne $t8, $t9, %s\n", nextLabel);
-                    } else if (strcmp(elseifOp, "!=") == 0) {
-                        fprintf(out, "    beq $t8, $t9, %s\n", nextLabel);
-                    } else if (strcmp(elseifOp, "<") == 0) {
-                        fprintf(out, "    slt $t7, $t8, $t9\n");
-                        fprintf(out, "    beq $t7, $zero, %s\n", nextLabel);
-                    } else if (strcmp(elseifOp, "<=") == 0) {
-                        fprintf(out, "    slt $t7, $t9, $t8\n");
-                        fprintf(out, "    bne $t7, $zero, %s\n", nextLabel);
-                    } else if (strcmp(elseifOp, ">") == 0) {
-                        fprintf(out, "    slt $t7, $t9, $t8\n");
-                        fprintf(out, "    beq $t7, $zero, %s\n", nextLabel);
-                    } else if (strcmp(elseifOp, ">=") == 0) {
-                        fprintf(out, "    slt $t7, $t8, $t9\n");
-                        fprintf(out, "    bne $t7, $zero, %s\n", nextLabel);
-                    }
+                    // Evaluate elseif condition using new function
+                    genConditionMips(elseif->condition, out, nextLabel);
                     
                     // Generate elseif block
                     genStmtMips(elseif->ifBlock, out);

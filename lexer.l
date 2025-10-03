@@ -75,6 +75,10 @@ STRING \"[^\"]*\"
 "{"         { return LBRACE; }
 "}"         { return RBRACE; }
 ","         { return COMMA; }
+"&&"        { return AND; }
+"||"        { return OR; }
+"!"         { return NOT; }
+"^"         { return XOR; }
 "=="        { return EQEQ; }
 "="         { return EQ; }
 "!="        { return NEQ; }

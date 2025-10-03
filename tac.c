@@ -42,6 +42,80 @@ TAC* concat(TAC* code1, TAC* code2) {
     return code1;
 }
 
+/* Generate TAC for conditions (handles logical operators) */
+TAC* genConditionTac(ASTNode* node, char* trueLabel, char* falseLabel) {
+    if (!node) return NULL;
+    
+    char* op = node->name;
+    
+    /* Handle logical AND */
+    if (strcmp(op, "&&") == 0) {
+        char* midLabel = newLabel();
+        TAC* leftCode = genConditionTac(node->left, midLabel, falseLabel);
+        TAC* labelCode = makeTAC(TAC_LABEL, midLabel, NULL, NULL);
+        TAC* rightCode = genConditionTac(node->right, trueLabel, falseLabel);
+        return concat(concat(leftCode, labelCode), rightCode);
+    }
+    
+    /* Handle logical OR */
+    if (strcmp(op, "||") == 0) {
+        char* midLabel = newLabel();
+        TAC* leftCode = genConditionTac(node->left, trueLabel, midLabel);
+        TAC* labelCode = makeTAC(TAC_LABEL, midLabel, NULL, NULL);
+        TAC* rightCode = genConditionTac(node->right, trueLabel, falseLabel);
+        return concat(concat(leftCode, labelCode), rightCode);
+    }
+    
+    /* Handle logical NOT */
+    if (strcmp(op, "!") == 0) {
+        /* Swap true and false labels */
+        return genConditionTac(node->left, falseLabel, trueLabel);
+    }
+    
+    /* Handle logical XOR */
+    if (strcmp(op, "xor") == 0) {
+        /* XOR: (A && !B) || (!A && B) */
+        char* label1 = newLabel();
+        char* label2 = newLabel();
+        
+        /* Check if left is true and right is false */
+        TAC* leftTrue1 = genConditionTac(node->left, label1, label2);
+        TAC* label1Code = makeTAC(TAC_LABEL, label1, NULL, NULL);
+        TAC* rightFalse1 = genConditionTac(node->right, falseLabel, trueLabel);
+        
+        /* Check if left is false and right is true */
+        TAC* label2Code = makeTAC(TAC_LABEL, label2, NULL, NULL);
+        TAC* rightTrue2 = genConditionTac(node->right, trueLabel, falseLabel);
+        
+        return concat(concat(concat(concat(
+            leftTrue1, label1Code), rightFalse1), label2Code), rightTrue2);
+    }
+    
+    /* Handle basic comparison operators */
+    char* leftPlace = NULL;
+    char* rightPlace = NULL;
+    TAC* leftCode = genExprTac(node->left, &leftPlace);
+    TAC* rightCode = genExprTac(node->right, &rightPlace);
+    
+    if (!leftPlace || !rightPlace) {
+        return NULL;
+    }
+    
+    /* Generate jump to trueLabel if condition is TRUE */
+    TACOp condOp;
+    if (strcmp(op, "==") == 0) condOp = TAC_IF_EQ;
+    else if (strcmp(op, "!=") == 0) condOp = TAC_IF_NEQ;
+    else if (strcmp(op, "<") == 0) condOp = TAC_IF_LT;
+    else if (strcmp(op, "<=") == 0) condOp = TAC_IF_LE;
+    else if (strcmp(op, ">") == 0) condOp = TAC_IF_GT;
+    else condOp = TAC_IF_GE;
+    
+    TAC* trueJump = makeTAC(condOp, trueLabel, leftPlace, rightPlace);
+    TAC* falseJump = makeTAC(TAC_GOTO, falseLabel, NULL, NULL);
+    
+    return concat(concat(concat(leftCode, rightCode), trueJump), falseJump);
+}
+
 /* Generate TAC for expressions */
 TAC* genExprTac(ASTNode* node, char** place) {
     if (!node) return NULL;
@@ -166,7 +240,7 @@ TAC* genStmtTac(ASTNode* node) {
     else if (strcmp(node->type, "if") == 0) {
         printf("DEBUG: Processing if statement\n");
         
-        // Safety check
+        /* Safety check */
         if (!node->condition) {
             fprintf(stderr, "Error: if statement has no condition\n");
             return NULL;
@@ -174,95 +248,63 @@ TAC* genStmtTac(ASTNode* node) {
         
         printf("DEBUG: If condition exists, type=%s\n", node->condition->type ? node->condition->type : "NULL");
         
-        // Generate labels
+        /* Generate labels */
         char* elseLabel = newLabel();
         char* endLabel = newLabel();
+        char* ifBodyLabel = newLabel();
         
-        printf("DEBUG: Generating condition left side\n");
-        // Generate condition code
-        char* leftPlace = NULL;
-        char* rightPlace = NULL;
-        TAC* leftCode = genExprTac(node->condition->left, &leftPlace);
+        /* Determine where to jump when condition is false */
+        char* falseLabel = (node->elseifList || node->elseBlock) ? elseLabel : endLabel;
         
-        printf("DEBUG: Generating condition right side\n");
-        TAC* rightCode = genExprTac(node->condition->right, &rightPlace);
+        /* Generate condition code using new function that handles logical operators */
+        TAC* condCode = genConditionTac(node->condition, ifBodyLabel, falseLabel);
         
-        printf("DEBUG: Condition operands generated\n");
-        
-        // Safety check
-        if (!leftPlace || !rightPlace) {
-            fprintf(stderr, "Error: failed to generate condition operands\n");
+        if (!condCode) {
+            fprintf(stderr, "Error: failed to generate condition code\n");
             return NULL;
         }
         
-        // Determine which conditional jump to use
-        // NOTE: We jump to else/end when condition is FALSE
-        // So we need to invert the condition
-        TACOp condOp;
-        if (strcmp(node->condition->name, "==") == 0) condOp = TAC_IF_NEQ;  // if NOT equal, jump
-        else if (strcmp(node->condition->name, "!=") == 0) condOp = TAC_IF_EQ;  // if equal, jump
-        else if (strcmp(node->condition->name, "<") == 0) condOp = TAC_IF_GE;   // if >=, jump
-        else if (strcmp(node->condition->name, "<=") == 0) condOp = TAC_IF_GT;  // if >, jump
-        else if (strcmp(node->condition->name, ">") == 0) condOp = TAC_IF_LE;   // if <=, jump
-        else condOp = TAC_IF_LT;  // if <, jump (for >=)
-        
-        // If condition is false, jump to else/elseif/end
-        char* falseLabel = (node->elseifList || node->elseBlock) ? elseLabel : endLabel;
-        TAC* condJump = makeTAC(condOp, falseLabel, leftPlace, rightPlace);
-        
-        // Generate if block code
+        /* Generate if block code */
+        TAC* ifBodyLabelCode = makeTAC(TAC_LABEL, ifBodyLabel, NULL, NULL);
         TAC* ifCode = genTAC(node->ifBlock);
         
-        // Jump to end after if block
+        /* Jump to end after if block */
         TAC* gotoEnd = makeTAC(TAC_GOTO, endLabel, NULL, NULL);
         
-        // Start building the complete TAC
-        TAC* result = concat(leftCode, rightCode);
-        result = concat(result, condJump);
+        /* Start building the complete TAC */
+        TAC* result = concat(condCode, ifBodyLabelCode);
         result = concat(result, ifCode);
         result = concat(result, gotoEnd);
         
-        // Handle elseif chain
+        /* Handle elseif chain */
         if (node->elseifList) {
             result = concat(result, makeTAC(TAC_LABEL, elseLabel, NULL, NULL));
             
             ASTNode* elseif = node->elseifList;
             while (elseif) {
-                // Safety check
+                /* Safety check */
                 if (!elseif->condition) {
                     fprintf(stderr, "Error: elseif has no condition\n");
                     break;
                 }
                 
+                char* elseifBodyLabel = newLabel();
                 char* nextLabel = (elseif->next || node->elseBlock) ? newLabel() : endLabel;
                 
-                // Generate elseif condition
-                char* elseifLeft = NULL;
-                char* elseifRight = NULL;
-                TAC* elseifLeftCode = genExprTac(elseif->condition->left, &elseifLeft);
-                TAC* elseifRightCode = genExprTac(elseif->condition->right, &elseifRight);
+                /* Generate elseif condition */
+                TAC* elseifCondCode = genConditionTac(elseif->condition, elseifBodyLabel, nextLabel);
                 
-                if (!elseifLeft || !elseifRight) {
+                if (!elseifCondCode) {
                     fprintf(stderr, "Error: failed to generate elseif condition\n");
                     break;
                 }
                 
-                // Invert condition for jump
-                TACOp elseifOp;
-                if (strcmp(elseif->condition->name, "==") == 0) elseifOp = TAC_IF_NEQ;
-                else if (strcmp(elseif->condition->name, "!=") == 0) elseifOp = TAC_IF_EQ;
-                else if (strcmp(elseif->condition->name, "<") == 0) elseifOp = TAC_IF_GE;
-                else if (strcmp(elseif->condition->name, "<=") == 0) elseifOp = TAC_IF_GT;
-                else if (strcmp(elseif->condition->name, ">") == 0) elseifOp = TAC_IF_LE;
-                else elseifOp = TAC_IF_LT;
-                
-                TAC* elseifJump = makeTAC(elseifOp, nextLabel, elseifLeft, elseifRight);
+                TAC* elseifBodyLabelCode = makeTAC(TAC_LABEL, elseifBodyLabel, NULL, NULL);
                 TAC* elseifBlock = genTAC(elseif->ifBlock);
                 TAC* elseifGoto = makeTAC(TAC_GOTO, endLabel, NULL, NULL);
                 
-                result = concat(result, elseifLeftCode);
-                result = concat(result, elseifRightCode);
-                result = concat(result, elseifJump);
+                result = concat(result, elseifCondCode);
+                result = concat(result, elseifBodyLabelCode);
                 result = concat(result, elseifBlock);
                 result = concat(result, elseifGoto);
                 
@@ -274,7 +316,7 @@ TAC* genStmtTac(ASTNode* node) {
             }
         }
         
-        // Handle else block
+        /* Handle else block */
         if (node->elseBlock) {
             if (!node->elseifList) {
                 result = concat(result, makeTAC(TAC_LABEL, elseLabel, NULL, NULL));
@@ -283,7 +325,7 @@ TAC* genStmtTac(ASTNode* node) {
             result = concat(result, elseCode);
         }
         
-        // Add end label
+        /* Add end label */
         result = concat(result, makeTAC(TAC_LABEL, endLabel, NULL, NULL));
         
         return result;

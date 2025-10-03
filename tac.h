@@ -47,6 +47,7 @@ TAC* genTAC(ASTNode* root);   // Generate TAC from AST
 void printTAC(TAC* code);     // Print TAC to stdout (for debugging)
 TAC* concatTAC(TAC* a, TAC* b);
 TAC* makeTAC(TACOp op, char* res, char* arg1, char* arg2);
+TAC* genExprTac(ASTNode* node, char** place);
 
 /* TAC Optimization Functions - integrated here */
 TAC* optimizeTAC(TAC* code);

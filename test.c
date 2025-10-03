@@ -111,3 +111,72 @@ if (x == 5) {
 } else {
     write(3);
 }
+
+/*
+ * Test file for logical operators: &&, ||, !, xor
+ * This demonstrates how to use logical operators in conditional statements
+ */
+
+/* Test AND operator (&&) */
+int myA = 5;
+int myB = 10;
+
+if (myA > 3 && myB < 15) {
+    write(1);  /* Should print: both conditions are true */
+}
+
+/* Test OR operator (||) */
+int myX = 2;
+int myY = 20;
+
+if (myX < 1 || myY > 15) {
+    write(2);  /* Should print: second condition is true */
+}
+
+/* Test NOT operator (!) */
+int flag = 1;
+
+if (!(flag == 1)) {
+    write(3);  /* Should print: flag is not 1 */
+}
+
+/* Test XOR operator */
+int myP = 5;
+int myQ = 8;
+
+if ((myP > 3) ^ (myQ < 5)) {
+    write(4);  /* Should print: only first condition is true */
+}
+
+/* Complex example with multiple operators */
+int age = 25;
+int hasLicense = 1;
+int hasInsurance = 1;
+
+if ((age >= 18 && hasLicense == 1) && hasInsurance == 1) {
+    write(5);  /* Should print: all conditions are true */
+}
+
+/* Nested logical operators */
+int score = 85;
+int bonus = 10;
+
+if ((score > 80 && bonus > 5) || score > 90) {
+    write(6);  /* Should print: first part is true */
+}
+
+/* XOR with complex expressions */
+int val1 = 10;
+int val2 = 5;
+
+if ((val1 > 8 && val2 < 10) ^ (val1 < 12 && val2 > 3)) {
+    write(7);  /* Should NOT print: both sides are true, XOR needs exactly one true */
+}
+
+/* NOT with compound condition */
+int enabled = 0;
+int ready = 1;
+
+if (!(enabled == 1 && ready == 1)) {
+    write(8);  /* Should print: compound condition is false */
+}
