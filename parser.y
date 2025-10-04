@@ -253,7 +253,15 @@ loop_init:
           }
           $$ = createAssign($1, $3);
       }
-    | declaration { $$ = $1; }
+    | TYPE IDENTIFIER EQ expression {
+          $$ = createAssign($2, $4);
+          char varType;
+          if (strcmp($1, "char") == 0) varType = 'c';
+          else if (strcmp($1, "string") == 0) varType = 's';
+          else varType = 'i';
+          addVar($2, 1, $4->value, varType);
+          printf("Loop variable declaration: %s\n", $2);
+      }
     | /* empty */ { $$ = NULL; }
     ;
 

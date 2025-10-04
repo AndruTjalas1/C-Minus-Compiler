@@ -32,13 +32,13 @@ void genExprMips(ASTNode* node, FILE* out) {
         }
         // Check if it's a string variable
         if (sym->stringValue) {
-            fprintf(out, "    la $t0, %s\n", sym->name);  // load string address
+            fprintf(out, "    la $t0, var_%s\n", sym->name);  // load string address
         }
         else if (sym->type == 'c') {
-            fprintf(out, "    lb $t0, %s\n", sym->name);
+            fprintf(out, "    lb $t0, var_%s\n", sym->name);
         }
         else {
-            fprintf(out, "    lw $t0, %s\n", sym->name);
+            fprintf(out, "    lw $t0, var_%s\n", sym->name);
         }
     }
     else if (strcmp(node->type, "array_access") == 0) {
@@ -51,12 +51,12 @@ void genExprMips(ASTNode* node, FILE* out) {
         genExprMips(node->left, out);
         
         if (sym->type == 'c') {
-            fprintf(out, "    la $t1, %s\n", sym->name);
+            fprintf(out, "    la $t1, var_%s\n", sym->name);
             fprintf(out, "    add $t1, $t1, $t0\n");
             fprintf(out, "    lb $t0, 0($t1)\n");
         } else {
             fprintf(out, "    sll $t0, $t0, 2\n");
-            fprintf(out, "    la $t1, %s\n", sym->name);
+            fprintf(out, "    la $t1, var_%s\n", sym->name);
             fprintf(out, "    add $t1, $t1, $t0\n");
             fprintf(out, "    lw $t0, 0($t1)\n");
         }
@@ -77,12 +77,12 @@ void genExprMips(ASTNode* node, FILE* out) {
         fprintf(out, "    add $t0, $t2, $t0\n");
         
         if (sym->type == 'c') {
-            fprintf(out, "    la $t1, %s\n", sym->name);
+            fprintf(out, "    la $t1, var_%s\n", sym->name);
             fprintf(out, "    add $t1, $t1, $t0\n");
             fprintf(out, "    lb $t0, 0($t1)\n");
         } else {
             fprintf(out, "    sll $t0, $t0, 2\n");
-            fprintf(out, "    la $t1, %s\n", sym->name);
+            fprintf(out, "    la $t1, var_%s\n", sym->name);
             fprintf(out, "    add $t1, $t1, $t0\n");
             fprintf(out, "    lw $t0, 0($t1)\n");
         }
@@ -236,9 +236,9 @@ void genStmtMips(ASTNode* node, FILE* out) {
                 return;
             }
             if (sym->type == 'c')
-                fprintf(out, "    sb $t0, %s\n", sym->name);
+                fprintf(out, "    sb $t0, var_%s\n", sym->name);
             else
-                fprintf(out, "    sw $t0, %s\n", sym->name);
+                fprintf(out, "    sw $t0, var_%s\n", sym->name);
         }
         else if (strcmp(p->type, "string_decl") == 0) {
             // Strings initialized in data section
@@ -255,12 +255,12 @@ void genStmtMips(ASTNode* node, FILE* out) {
                 fprintf(out, "    li $t1, %d\n", i);
                 
                 if (sym->type == 'c') {
-                    fprintf(out, "    la $t2, %s\n", sym->name);
+                    fprintf(out, "    la $t2, var_%s\n", sym->name);
                     fprintf(out, "    add $t2, $t2, $t1\n");
                     fprintf(out, "    sb $t0, 0($t2)\n");
                 } else {
                     fprintf(out, "    sll $t1, $t1, 2\n");
-                    fprintf(out, "    la $t2, %s\n", sym->name);
+                    fprintf(out, "    la $t2, var_%s\n", sym->name);
                     fprintf(out, "    add $t2, $t2, $t1\n");
                     fprintf(out, "    sw $t0, 0($t2)\n");
                 }
@@ -279,12 +279,12 @@ void genStmtMips(ASTNode* node, FILE* out) {
                 fprintf(out, "    li $t1, %d\n", i);
                 
                 if (sym->type == 'c') {
-                    fprintf(out, "    la $t2, %s\n", sym->name);
+                    fprintf(out, "    la $t2, var_%s\n", sym->name);
                     fprintf(out, "    add $t2, $t2, $t1\n");
                     fprintf(out, "    sb $t0, 0($t2)\n");
                 } else {
                     fprintf(out, "    sll $t1, $t1, 2\n");
-                    fprintf(out, "    la $t2, %s\n", sym->name);
+                    fprintf(out, "    la $t2, var_%s\n", sym->name);
                     fprintf(out, "    add $t2, $t2, $t1\n");
                     fprintf(out, "    sw $t0, 0($t2)\n");
                 }
@@ -305,12 +305,12 @@ void genStmtMips(ASTNode* node, FILE* out) {
                 genExprMips(arrayAccess->left, out);
                 
                 if (sym->type == 'c') {
-                    fprintf(out, "    la $t1, %s\n", sym->name);
+                    fprintf(out, "    la $t1, var_%s\n", sym->name);
                     fprintf(out, "    add $t1, $t1, $t0\n");
                     fprintf(out, "    sb $t9, 0($t1)\n");
                 } else {
                     fprintf(out, "    sll $t0, $t0, 2\n");
-                    fprintf(out, "    la $t1, %s\n", sym->name);
+                    fprintf(out, "    la $t1, var_%s\n", sym->name);
                     fprintf(out, "    add $t1, $t1, $t0\n");
                     fprintf(out, "    sw $t9, 0($t1)\n");
                 }
@@ -325,12 +325,12 @@ void genStmtMips(ASTNode* node, FILE* out) {
                 fprintf(out, "    add $t0, $t2, $t0\n");
                 
                 if (sym->type == 'c') {
-                    fprintf(out, "    la $t1, %s\n", sym->name);
+                    fprintf(out, "    la $t1, var_%s\n", sym->name);
                     fprintf(out, "    add $t1, $t1, $t0\n");
                     fprintf(out, "    sb $t9, 0($t1)\n");
                 } else {
                     fprintf(out, "    sll $t0, $t0, 2\n");
-                    fprintf(out, "    la $t1, %s\n", sym->name);
+                    fprintf(out, "    la $t1, var_%s\n", sym->name);
                     fprintf(out, "    add $t1, $t1, $t0\n");
                     fprintf(out, "    sw $t9, 0($t1)\n");
                 }
@@ -341,7 +341,7 @@ void genStmtMips(ASTNode* node, FILE* out) {
             if (p->left && strcmp(p->left->type, "var") == 0) {
                 Symbol* sym = lookupSymbol(p->left->name);
                 if (sym && sym->stringValue) {
-                    fprintf(out, "    la $a0, %s\n", sym->name);
+                    fprintf(out, "    la $a0, var_%s\n", sym->name);
                     fprintf(out, "    li $v0, 4\n    syscall\n");
                     fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n");
                     p = p->next;
@@ -545,13 +545,13 @@ void generateMIPS(ASTNode* root, const char* filename) {
         Symbol* s = symtab.buckets[i];
         while (s) {
             if (s->stringValue) {
-                fprintf(out, "%s: .asciiz \"%s\"\n", s->name, s->stringValue);
+                fprintf(out, "var_%s: .asciiz \"%s\"\n", s->name, s->stringValue);
             }
             else if (s->type == 'c') {
                 if (s->dimensions == 0) {
-                    fprintf(out, "%s: .byte %d\n", s->name, s->initial_value);
+                    fprintf(out, "var_%s: .byte %d\n", s->name, s->initial_value);
                 } else {
-                    fprintf(out, "%s: .space %d\n", s->name, s->size);
+                    fprintf(out, "var_%s: .space %d\n", s->name, s->size);
                 }
             }
             s = s->next;
@@ -566,9 +566,9 @@ void generateMIPS(ASTNode* root, const char* filename) {
         while (s) {
             if (s->type == 'i') {
                 if (s->dimensions == 0) {
-                    fprintf(out, "%s: .word %d\n", s->name, s->initial_value);
+                    fprintf(out, "var_%s: .word %d\n", s->name, s->initial_value);
                 } else {
-                    fprintf(out, "%s: .space %d\n", s->name, s->size * 4);
+                    fprintf(out, "var_%s: .space %d\n", s->name, s->size * 4);
                 }
             }
             s = s->next;
