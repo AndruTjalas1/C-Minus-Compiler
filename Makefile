@@ -17,7 +17,7 @@ endif
 
 # Target executable
 TARGET = Compiler
-OBJS = lex.yy.o parser.tab.o main.o AST.o symtab.o codegen.o tac.o benchmark.o stringpool.o
+OBJS = lex.yy.o parser.tab.o main.o AST.o symtab.o codegen.o tac.o benchmark.o stringpool.o error.o
 
 # Default rule
 all: $(TARGET)
@@ -61,6 +61,9 @@ benchmark.o: benchmark.c benchmark.h
 
 stringpool.o: stringpool.c stringpool.h
 	$(CC) $(CFLAGS) -c stringpool.c
+
+error.o: error.c error.h
+	$(CC) $(CFLAGS) -c error.c
 
 # Clean build artifacts
 clean:

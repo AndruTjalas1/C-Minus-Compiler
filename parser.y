@@ -4,9 +4,12 @@
 #include <string.h>
 #include "ast.h"
 #include "symtab.h"
+#include "error.h"
 
 extern int yylex();
 extern FILE* yyin;
+extern int yylineno;
+extern char* yytext;
 
 ASTNode* root = NULL;
 
@@ -26,13 +29,17 @@ int* extractInitValues(ASTNode* initList, int* count);
 %token <num> NUMBER
 %token <character> CHAR_LITERAL
 %token <str> STRING_LITERAL
-%token SEMICOLON EQ PLUS MINUS MULTIPLY DIVIDE
+%token SEMICOLON EQ PLUS MINUS MULTIPLY DIVIDE MODULO
+%token PLUSEQ MINUSEQ MULTEQ DIVEQ MODEQ
+%token PLUSPLUS MINUSMINUS
 %token LBRACKET RBRACKET LBRACE RBRACE COMMA KEYWORD
 %token LPAREN RPAREN
 %token IF ELSEIF ELSE
 %token FOR WHILE DO
 %token EQEQ NEQ LT LE GT GE
 %token AND OR NOT XOR
+
+%expect 4
 
 %type <node> program stmt declaration assignment expression print_stmt
 %type <node> array_access init_list if_stmt condition stmt_block elseif_list stmt_list
@@ -45,7 +52,7 @@ int* extractInitValues(ASTNode* initList, int* count);
 %left EQEQ NEQ
 %left LT LE GT GE
 %left PLUS MINUS
-%left MULTIPLY DIVIDE
+%left MULTIPLY DIVIDE MODULO
 
 %%
 
@@ -134,11 +141,114 @@ assignment:
       IDENTIFIER EQ expression SEMICOLON
         { 
           if (!isVarDeclared($1)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           $$ = createAssign($1, $3); 
           printf("Assignment: %s\n", $1);
+        }
+    | IDENTIFIER PLUSEQ expression SEMICOLON
+        {
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          ASTNode* var = createVar($1);
+          ASTNode* add = createBinOp('+', var, $3);
+          $$ = createAssign($1, add);
+          printf("Compound assignment: %s += \n", $1);
+        }
+    | IDENTIFIER MINUSEQ expression SEMICOLON
+        {
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          ASTNode* var = createVar($1);
+          ASTNode* sub = createBinOp('-', var, $3);
+          $$ = createAssign($1, sub);
+          printf("Compound assignment: %s -= \n", $1);
+        }
+    | IDENTIFIER MULTEQ expression SEMICOLON
+        {
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          ASTNode* var = createVar($1);
+          ASTNode* mul = createBinOp('*', var, $3);
+          $$ = createAssign($1, mul);
+          printf("Compound assignment: %s *= \n", $1);
+        }
+    | IDENTIFIER DIVEQ expression SEMICOLON
+        {
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          ASTNode* var = createVar($1);
+          ASTNode* div = createBinOp('/', var, $3);
+          $$ = createAssign($1, div);
+          printf("Compound assignment: %s /= \n", $1);
+        }
+    | IDENTIFIER MODEQ expression SEMICOLON
+        {
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          ASTNode* var = createVar($1);
+          ASTNode* mod = createBinOp('%', var, $3);
+          $$ = createAssign($1, mod);
+          printf("Compound assignment: %s %%= \n", $1);
+        }
+    | IDENTIFIER PLUSPLUS SEMICOLON
+        {
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          ASTNode* var = createVar($1);
+          ASTNode* one = createNum(1);
+          ASTNode* add = createBinOp('+', var, one);
+          $$ = createAssign($1, add);
+          printf("Post-increment: %s++\n", $1);
+        }
+    | IDENTIFIER MINUSMINUS SEMICOLON
+        {
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          ASTNode* var = createVar($1);
+          ASTNode* one = createNum(1);
+          ASTNode* sub = createBinOp('-', var, one);
+          $$ = createAssign($1, sub);
+          printf("Post-decrement: %s--\n", $1);
+        }
+    | PLUSPLUS IDENTIFIER SEMICOLON
+        {
+          if (!isVarDeclared($2)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $2);
+              exit(1);
+          }
+          ASTNode* var = createVar($2);
+          ASTNode* one = createNum(1);
+          ASTNode* add = createBinOp('+', var, one);
+          $$ = createAssign($2, add);
+          printf("Pre-increment: ++%s\n", $2);
+        }
+    | MINUSMINUS IDENTIFIER SEMICOLON
+        {
+          if (!isVarDeclared($2)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $2);
+              exit(1);
+          }
+          ASTNode* var = createVar($2);
+          ASTNode* one = createNum(1);
+          ASTNode* sub = createBinOp('-', var, one);
+          $$ = createAssign($2, sub);
+          printf("Pre-decrement: --%s\n", $2);
         }
     | array_access EQ expression SEMICOLON
         {
@@ -274,6 +384,50 @@ loop_update:
           }
           $$ = createAssign($1, $3);
         }
+    | IDENTIFIER PLUSPLUS
+        {
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          ASTNode* var = createVar($1);
+          ASTNode* one = createNum(1);
+          ASTNode* add = createBinOp('+', var, one);
+          $$ = createAssign($1, add);
+        }
+    | IDENTIFIER MINUSMINUS
+        {
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          ASTNode* var = createVar($1);
+          ASTNode* one = createNum(1);
+          ASTNode* sub = createBinOp('-', var, one);
+          $$ = createAssign($1, sub);
+        }
+    | PLUSPLUS IDENTIFIER
+        {
+          if (!isVarDeclared($2)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $2);
+              exit(1);
+          }
+          ASTNode* var = createVar($2);
+          ASTNode* one = createNum(1);
+          ASTNode* add = createBinOp('+', var, one);
+          $$ = createAssign($2, add);
+        }
+    | MINUSMINUS IDENTIFIER
+        {
+          if (!isVarDeclared($2)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $2);
+              exit(1);
+          }
+          ASTNode* var = createVar($2);
+          ASTNode* one = createNum(1);
+          ASTNode* sub = createBinOp('-', var, one);
+          $$ = createAssign($2, sub);
+        }
     | /* empty */ { $$ = NULL; }
     ;
 
@@ -309,13 +463,24 @@ expression:
     | expression MINUS expression    { $$ = createBinOp('-', $1, $3); }
     | expression MULTIPLY expression { $$ = createBinOp('*', $1, $3); }
     | expression DIVIDE expression   { $$ = createBinOp('/', $1, $3); }
+    | expression MODULO expression   { $$ = createBinOp('%', $1, $3); }
     ;
 
 %%
 
 void yyerror(const char* s) {
-    extern int yylineno;
-    fprintf(stderr, "Syntax error at line %d: %s\n", yylineno, s);
+    // Try to provide more context about the error
+    if (strstr(s, "syntax error")) {
+        if (yytext && strlen(yytext) > 0) {
+            reportError(yylineno, yytext, ERROR_SYNTAX, 
+                       "Unexpected token or syntax error");
+        } else {
+            reportError(yylineno, "", ERROR_SYNTAX, 
+                       "Syntax error in source code");
+        }
+    } else {
+        reportError(yylineno, yytext ? yytext : "", ERROR_SYNTAX, s);
+    }
 }
 
 int* extractInitValues(ASTNode* initList, int* count) {

@@ -72,6 +72,14 @@ STRING \"[^\"]*\"
     return STRING_LITERAL;
 }
 
+"+="        { return PLUSEQ; }
+"-="        { return MINUSEQ; }
+"*="        { return MULTEQ; }
+"/="        { return DIVEQ; }
+"%="        { return MODEQ; }
+"++"        { return PLUSPLUS; }
+"--"        { return MINUSMINUS; }
+"%"         { return MODULO; }
 ";"         { return SEMICOLON; }
 "["         { return LBRACKET; }
 "]"         { return RBRACKET; }

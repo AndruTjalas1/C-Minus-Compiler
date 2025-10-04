@@ -99,6 +99,7 @@ void genExprMips(ASTNode* node, FILE* out) {
             case '-': fprintf(out, "    sub $t0, $s0, $t0\n"); break;
             case '*': fprintf(out, "    mul $t0, $s0, $t0\n"); break;
             case '/': fprintf(out, "    div $s0, $t0\n    mflo $t0\n"); break;
+            case '%': fprintf(out, "    div $s0, $t0\n    mfhi $t0\n"); break;
         }
 
         fprintf(out, "    addiu $sp, $sp, 4\n");

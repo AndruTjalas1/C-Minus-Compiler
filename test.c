@@ -278,3 +278,71 @@ do {
     test = test + 1;
 } while (test < 100);
 
+/* Test file for modulo, compound assignment, and unary operators */
+
+/* Test 1: Modulo operator */
+int a;
+int b;
+a = 17;
+b = 5;
+int result;
+result = a % b;  /* Should be 2 */
+write(result);
+
+/* Test 2: Compound assignment operators */
+int x;
+x = 10;
+write(x);
+
+x += 5;   /* x = 15 */
+write(x);
+
+x -= 3;   /* x = 12 */
+write(x);
+
+x *= 2;   /* x = 24 */
+write(x);
+
+x /= 5;   /* x = 6 */
+write(x);
+
+x %= 4;   /* x = 2 */
+write(x);
+
+/* Test 3: Post-increment and post-decrement */
+int i;
+i = 5;
+write(i);
+
+i++;      /* i = 6 */
+write(i);
+
+i--;      /* i = 5 */
+write(i);
+
+/* Test 4: Pre-increment and pre-decrement */
+int j;
+j = 10;
+write(j);
+
+++j;      /* j = 11 */
+write(j);
+
+--j;      /* j = 10 */
+write(j);
+
+/* Test 5: Using in loops */
+int k;
+for (k = 0; k < 10; k++) {
+    if (k % 2 == 0) {
+        write(k);  /* Print even numbers */
+    }
+}
+
+/* Test 6: Combining operators */
+int n;
+n = 100;
+n /= 10;   /* n = 10 */
+n *= 3;    /* n = 30 */
+n %= 7;    /* n = 2 */
+write(n);
