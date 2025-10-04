@@ -431,6 +431,101 @@ void genStmtMips(ASTNode* node, FILE* out) {
             // End label
             fprintf(out, "%s:\n", endLabel);
         }
+        else if (strcmp(p->type, "for") == 0) {
+            // Generate unique labels for the for loop
+            static int forCounter = 0;
+            char startLabel[32], condLabel[32], updateLabel[32], endLabel[32];
+            sprintf(startLabel, "for_start_%d", forCounter);
+            sprintf(condLabel, "for_cond_%d", forCounter);
+            sprintf(updateLabel, "for_update_%d", forCounter);
+            sprintf(endLabel, "for_end_%d", forCounter);
+            forCounter++;
+            
+            // Generate initialization code
+            if (p->loopInit) {
+                genStmtMips(p->loopInit, out);
+            }
+            
+            // Condition label and check
+            fprintf(out, "%s:\n", condLabel);
+            if (p->condition) {
+                genConditionMips(p->condition, out, endLabel);
+            }
+            
+            // Loop body
+            genStmtMips(p->loopBody, out);
+            
+            // Update expression
+            fprintf(out, "%s:\n", updateLabel);
+            if (p->loopUpdate) {
+                genStmtMips(p->loopUpdate, out);
+            }
+            
+            // Jump back to condition
+            fprintf(out, "    j %s\n", condLabel);
+            
+            // End label
+            fprintf(out, "%s:\n", endLabel);
+        }
+        else if (strcmp(p->type, "while") == 0) {
+            // Generate unique labels for the while loop
+            static int whileCounter = 0;
+            char condLabel[32], endLabel[32];
+            sprintf(condLabel, "while_cond_%d", whileCounter);
+            sprintf(endLabel, "while_end_%d", whileCounter);
+            whileCounter++;
+            
+            // Condition label and check
+            fprintf(out, "%s:\n", condLabel);
+            if (p->condition) {
+                genConditionMips(p->condition, out, endLabel);
+            }
+            
+            // Loop body
+            genStmtMips(p->loopBody, out);
+            
+            // Jump back to condition
+            fprintf(out, "    j %s\n", condLabel);
+            
+            // End label
+            fprintf(out, "%s:\n", endLabel);
+        }
+        else if (strcmp(p->type, "do_while") == 0) {
+            // Generate unique labels for the do-while loop
+            static int doWhileCounter = 0;
+            char startLabel[32], condLabel[32];
+            sprintf(startLabel, "do_start_%d", doWhileCounter);
+            sprintf(condLabel, "do_cond_%d", doWhileCounter);
+            doWhileCounter++;
+            
+            // Start label - body executes at least once
+            fprintf(out, "%s:\n", startLabel);
+            
+            // Loop body
+            genStmtMips(p->loopBody, out);
+            
+            // Condition check - if true, continue loop
+            fprintf(out, "%s:\n", condLabel);
+            if (p->condition) {
+                // For do-while, we want to jump back to start if condition is TRUE
+                // So we need to invert the jump logic by creating a temp label
+                static int doEndCounter = 0;
+                char endLabel[32];
+                sprintf(endLabel, "do_end_%d", doEndCounter++);
+                
+                // Evaluate condition and jump to end if FALSE
+                genConditionMips(p->condition, out, endLabel);
+                
+                // If we get here, condition was true, so loop again
+                fprintf(out, "    j %s\n", startLabel);
+                
+                // End label
+                fprintf(out, "%s:\n", endLabel);
+            } else {
+                // No condition means infinite loop
+                fprintf(out, "    j %s\n", startLabel);
+            }
+        }
         p = p->next;
     }
 }

@@ -30,11 +30,13 @@ int* extractInitValues(ASTNode* initList, int* count);
 %token LBRACKET RBRACKET LBRACE RBRACE COMMA KEYWORD
 %token LPAREN RPAREN
 %token IF ELSEIF ELSE
+%token FOR WHILE DO
 %token EQEQ NEQ LT LE GT GE
 %token AND OR NOT XOR
 
 %type <node> program stmt declaration assignment expression print_stmt
 %type <node> array_access init_list if_stmt condition stmt_block elseif_list stmt_list
+%type <node> for_stmt while_stmt do_while_stmt loop_init loop_update
 
 %left OR
 %left XOR
@@ -57,6 +59,9 @@ stmt:
     | assignment
     | print_stmt
     | if_stmt
+    | for_stmt
+    | while_stmt
+    | do_while_stmt
     ;
 
 declaration:
@@ -230,6 +235,54 @@ condition:
     | condition XOR condition    { $$ = createCondition("xor", $1, $3); }
     | NOT condition              { $$ = createCondition("!", $2, NULL); }
     | LPAREN condition RPAREN    { $$ = $2; }
+    ;
+
+for_stmt:
+      FOR LPAREN loop_init SEMICOLON condition SEMICOLON loop_update RPAREN stmt_block
+        {
+          $$ = createFor($3, $5, $7, $9);
+          printf("For loop created\n");
+        }
+    ;
+
+loop_init:
+      IDENTIFIER EQ expression { 
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          $$ = createAssign($1, $3);
+      }
+    | declaration { $$ = $1; }
+    | /* empty */ { $$ = NULL; }
+    ;
+
+loop_update:
+      IDENTIFIER EQ expression 
+        {
+          if (!isVarDeclared($1)) {
+              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              exit(1);
+          }
+          $$ = createAssign($1, $3);
+        }
+    | /* empty */ { $$ = NULL; }
+    ;
+
+while_stmt:
+      WHILE LPAREN condition RPAREN stmt_block
+        {
+          $$ = createWhile($3, $5);
+          printf("While loop created\n");
+        }
+    ;
+
+do_while_stmt:
+      DO stmt_block WHILE LPAREN condition RPAREN SEMICOLON
+        {
+          $$ = createDoWhile($5, $2);
+          printf("Do-while loop created\n");
+        }
     ;
 
 expression:

@@ -48,6 +48,9 @@ STRING \"[^\"]*\"
 "if"        { return IF; }
 "elseif"    { return ELSEIF; }
 "else"      { return ELSE; }
+"for"       { return FOR; }
+"while"     { return WHILE; }
+"do"        { return DO; }
 
 {ID}        { 
     yylval.str = strdup(yytext); 

@@ -279,3 +279,26 @@ ASTNode* createElseIfList(ASTNode* list, ASTNode* condition, ASTNode* block) {
     p->next = elseifNode;
     return list;
 }
+
+ASTNode* createFor(ASTNode* init, ASTNode* condition, ASTNode* update, ASTNode* body) {
+    ASTNode* node = newNode("for");
+    node->loopInit = init;
+    node->condition = condition;
+    node->loopUpdate = update;
+    node->loopBody = body;
+    return node;
+}
+
+ASTNode* createWhile(ASTNode* condition, ASTNode* body) {
+    ASTNode* node = newNode("while");
+    node->condition = condition;
+    node->loopBody = body;
+    return node;
+}
+
+ASTNode* createDoWhile(ASTNode* condition, ASTNode* body) {
+    ASTNode* node = newNode("do_while");
+    node->condition = condition;
+    node->loopBody = body;
+    return node;
+}

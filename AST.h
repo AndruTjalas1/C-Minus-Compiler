@@ -14,6 +14,9 @@ typedef struct ASTNode {
     struct ASTNode* ifBlock;
     struct ASTNode* elseifList;
     struct ASTNode* elseBlock;
+    struct ASTNode* loopInit;
+    struct ASTNode* loopUpdate;
+    struct ASTNode* loopBody;
 } ASTNode;
 
 // Memory pool functions
@@ -44,5 +47,8 @@ ASTNode* createCondition(char* op, ASTNode* left, ASTNode* right);
 ASTNode* createIf(ASTNode* condition, ASTNode* ifBlock, ASTNode* elseifList, ASTNode* elseBlock);
 ASTNode* createElseIf(ASTNode* condition, ASTNode* block);
 ASTNode* createElseIfList(ASTNode* list, ASTNode* condition, ASTNode* block);
+ASTNode* createFor(ASTNode* init, ASTNode* condition, ASTNode* update, ASTNode* body);
+ASTNode* createWhile(ASTNode* condition, ASTNode* body);
+ASTNode* createDoWhile(ASTNode* condition, ASTNode* body);
 
 #endif
