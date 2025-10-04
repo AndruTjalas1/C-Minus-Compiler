@@ -1,7 +1,7 @@
 /* Test file with various errors to demonstrate error handling */
 
 /* Error 1: Undeclared variable */
-x = 10;
+/*x = 10;*/
 
 /* Error 2: Missing semicolon */
 int y = 20

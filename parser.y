@@ -150,7 +150,7 @@ assignment:
     | IDENTIFIER PLUSEQ expression SEMICOLON
         {
           if (!isVarDeclared($1)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           ASTNode* var = createVar($1);
@@ -161,7 +161,7 @@ assignment:
     | IDENTIFIER MINUSEQ expression SEMICOLON
         {
           if (!isVarDeclared($1)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           ASTNode* var = createVar($1);
@@ -172,7 +172,7 @@ assignment:
     | IDENTIFIER MULTEQ expression SEMICOLON
         {
           if (!isVarDeclared($1)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           ASTNode* var = createVar($1);
@@ -183,7 +183,7 @@ assignment:
     | IDENTIFIER DIVEQ expression SEMICOLON
         {
           if (!isVarDeclared($1)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           ASTNode* var = createVar($1);
@@ -194,7 +194,7 @@ assignment:
     | IDENTIFIER MODEQ expression SEMICOLON
         {
           if (!isVarDeclared($1)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           ASTNode* var = createVar($1);
@@ -205,7 +205,7 @@ assignment:
     | IDENTIFIER PLUSPLUS SEMICOLON
         {
           if (!isVarDeclared($1)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           ASTNode* var = createVar($1);
@@ -217,7 +217,7 @@ assignment:
     | IDENTIFIER MINUSMINUS SEMICOLON
         {
           if (!isVarDeclared($1)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           ASTNode* var = createVar($1);
@@ -229,7 +229,7 @@ assignment:
     | PLUSPLUS IDENTIFIER SEMICOLON
         {
           if (!isVarDeclared($2)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $2);
+              errorUndeclaredVariable(yylineno, $2);
               exit(1);
           }
           ASTNode* var = createVar($2);
@@ -241,7 +241,7 @@ assignment:
     | MINUSMINUS IDENTIFIER SEMICOLON
         {
           if (!isVarDeclared($2)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $2);
+              errorUndeclaredVariable(yylineno, $2);
               exit(1);
           }
           ASTNode* var = createVar($2);
@@ -269,7 +269,7 @@ array_access:
       IDENTIFIER LBRACKET expression RBRACKET
         {
           if (!isVarDeclared($1)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           $$ = createArrayAccess($1, $3);
@@ -277,7 +277,7 @@ array_access:
     | IDENTIFIER LBRACKET expression RBRACKET LBRACKET expression RBRACKET
         {
           if (!isVarDeclared($1)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           $$ = create2DArrayAccess($1, $3, $6);
@@ -358,7 +358,7 @@ for_stmt:
 loop_init:
       IDENTIFIER EQ expression { 
           if (!isVarDeclared($1)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           $$ = createAssign($1, $3);
@@ -452,7 +452,7 @@ expression:
     | CHAR_LITERAL       { $$ = createChar($1); }
     | IDENTIFIER         { 
           if (!isVarDeclared($1)) {
-              fprintf(stderr, "Error: variable '%s' not declared\n", $1);
+              errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           $$ = createVar($1); 
