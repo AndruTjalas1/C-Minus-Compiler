@@ -43,8 +43,20 @@ STRING \"[^\"]*\"
     yylval.str = strdup("string"); 
     return TYPE; 
 }
+"bool"      { 
+    yylval.str = strdup("bool"); 
+    return TYPE; 
+}
 
 "write"     { return KEYWORD; }
+"true"      { 
+    yylval.num = 1; 
+    return TRUE; 
+}
+"false"     { 
+    yylval.num = 0; 
+    return FALSE; 
+}
 "if"        { return IF; }
 "elseif"    { return ELSEIF; }
 "else"      { return ELSE; }

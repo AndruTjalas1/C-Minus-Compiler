@@ -38,8 +38,9 @@ int* extractInitValues(ASTNode* initList, int* count);
 %token FOR WHILE DO
 %token EQEQ NEQ LT LE GT GE
 %token AND OR NOT XOR
+%token <num> TRUE FALSE
 
-%expect 4
+%expect 5
 
 %type <node> program stmt declaration assignment expression print_stmt
 %type <node> array_access init_list if_stmt condition stmt_block elseif_list stmt_list
@@ -78,9 +79,10 @@ declaration:
           char varType;
           if (strcmp($1, "char") == 0) varType = 'c';
           else if (strcmp($1, "string") == 0) varType = 's';
+          else if (strcmp($1, "bool") == 0) varType = 'b';
           else varType = 'i';
           addVar($2, 1, 0, varType);
-          printf("Variable declaration: %s\n", $2); 
+          // printf("Variable declaration: %s\n", $2); 
         }
     | TYPE IDENTIFIER EQ expression SEMICOLON
         { 
@@ -88,9 +90,10 @@ declaration:
           char varType;
           if (strcmp($1, "char") == 0) varType = 'c';
           else if (strcmp($1, "string") == 0) varType = 's';
+          else if (strcmp($1, "bool") == 0) varType = 'b';
           else varType = 'i';
           addVar($2, 1, $4->value, varType);
-          printf("Initialized variable: %s\n", $2);
+          // printf("Initialized variable: %s\n", $2);
         }
     | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET EQ LBRACE init_list RBRACE SEMICOLON
         { 
@@ -99,21 +102,21 @@ declaration:
           $$ = createArrayDeclInit($2, $4, $8);
           char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
           addArrayWithInit($2, $4, varType, initValues, initCount);
-          printf("Initialized array declaration: %s[%d] with %d values\n", $2, $4, initCount);
+          // printf("Initialized array declaration: %s[%d] with %d values\n", $2, $4, initCount);
         }
     | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET SEMICOLON
         { 
           $$ = createArrayDecl($2, $4);
           char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
           addArray($2, $4, varType);
-          printf("Array declaration: %s[%d]\n", $2, $4);
+          // printf("Array declaration: %s[%d]\n", $2, $4);
         }
     | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET LBRACKET NUMBER RBRACKET SEMICOLON
         { 
           $$ = create2DArrayDecl($2, $4, $7);
           char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
           add2DArray($2, $4, $7, varType);
-          printf("2D Array declaration: %s[%d][%d]\n", $2, $4, $7);
+          // printf("2D Array declaration: %s[%d][%d]\n", $2, $4, $7);
         }
     | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET LBRACKET NUMBER RBRACKET EQ LBRACE init_list RBRACE SEMICOLON
         { 
@@ -122,14 +125,14 @@ declaration:
           $$ = create2DArrayDeclInit($2, $4, $7, $11);
           char varType = (strcmp($1, "char") == 0) ? 'c' : 'i';
           add2DArrayWithInit($2, $4, $7, varType, initValues, initCount);
-          printf("Initialized 2D array declaration: %s[%d][%d] with %d values\n", $2, $4, $7, initCount);
+          // printf("Initialized 2D array declaration: %s[%d][%d] with %d values\n", $2, $4, $7, initCount);
         }
     | TYPE IDENTIFIER EQ STRING_LITERAL SEMICOLON
         {
             if (strcmp($1, "string") == 0) {
                 $$ = createStringDecl($2, $4);
                 addStringVar($2, $4);
-                printf("String declaration: %s = \"%s\"\n", $2, $4);
+                // printf("String declaration: %s = \"%s\"\n", $2, $4);
             } else {
                 fprintf(stderr, "Error: string literals must use 'string' type\n");
                 exit(1);
@@ -145,7 +148,7 @@ assignment:
               exit(1);
           }
           $$ = createAssign($1, $3); 
-          printf("Assignment: %s\n", $1);
+          // printf("Assignment: %s\n", $1);
         }
     | IDENTIFIER PLUSEQ expression SEMICOLON
         {
@@ -156,7 +159,7 @@ assignment:
           ASTNode* var = createVar($1);
           ASTNode* add = createBinOp('+', var, $3);
           $$ = createAssign($1, add);
-          printf("Compound assignment: %s += \n", $1);
+          // printf("Compound assignment: %s += \n", $1);
         }
     | IDENTIFIER MINUSEQ expression SEMICOLON
         {
@@ -167,7 +170,7 @@ assignment:
           ASTNode* var = createVar($1);
           ASTNode* sub = createBinOp('-', var, $3);
           $$ = createAssign($1, sub);
-          printf("Compound assignment: %s -= \n", $1);
+          // printf("Compound assignment: %s -= \n", $1);
         }
     | IDENTIFIER MULTEQ expression SEMICOLON
         {
@@ -178,7 +181,7 @@ assignment:
           ASTNode* var = createVar($1);
           ASTNode* mul = createBinOp('*', var, $3);
           $$ = createAssign($1, mul);
-          printf("Compound assignment: %s *= \n", $1);
+          // printf("Compound assignment: %s *= \n", $1);
         }
     | IDENTIFIER DIVEQ expression SEMICOLON
         {
@@ -189,7 +192,7 @@ assignment:
           ASTNode* var = createVar($1);
           ASTNode* div = createBinOp('/', var, $3);
           $$ = createAssign($1, div);
-          printf("Compound assignment: %s /= \n", $1);
+          // printf("Compound assignment: %s /= \n", $1);
         }
     | IDENTIFIER MODEQ expression SEMICOLON
         {
@@ -200,7 +203,7 @@ assignment:
           ASTNode* var = createVar($1);
           ASTNode* mod = createBinOp('%', var, $3);
           $$ = createAssign($1, mod);
-          printf("Compound assignment: %s %%= \n", $1);
+          // printf("Compound assignment: %s %%= \n", $1);
         }
     | IDENTIFIER PLUSPLUS SEMICOLON
         {
@@ -212,7 +215,7 @@ assignment:
           ASTNode* one = createNum(1);
           ASTNode* add = createBinOp('+', var, one);
           $$ = createAssign($1, add);
-          printf("Post-increment: %s++\n", $1);
+          // printf("Post-increment: %s++\n", $1);
         }
     | IDENTIFIER MINUSMINUS SEMICOLON
         {
@@ -224,7 +227,7 @@ assignment:
           ASTNode* one = createNum(1);
           ASTNode* sub = createBinOp('-', var, one);
           $$ = createAssign($1, sub);
-          printf("Post-decrement: %s--\n", $1);
+          // printf("Post-decrement: %s--\n", $1);
         }
     | PLUSPLUS IDENTIFIER SEMICOLON
         {
@@ -236,7 +239,7 @@ assignment:
           ASTNode* one = createNum(1);
           ASTNode* add = createBinOp('+', var, one);
           $$ = createAssign($2, add);
-          printf("Pre-increment: ++%s\n", $2);
+          // printf("Pre-increment: ++%s\n", $2);
         }
     | MINUSMINUS IDENTIFIER SEMICOLON
         {
@@ -248,20 +251,20 @@ assignment:
           ASTNode* one = createNum(1);
           ASTNode* sub = createBinOp('-', var, one);
           $$ = createAssign($2, sub);
-          printf("Pre-decrement: --%s\n", $2);
+          // printf("Pre-decrement: --%s\n", $2);
         }
     | array_access EQ expression SEMICOLON
         {
           $$ = createArrayAssign($1, $3);
-          printf("Array assignment\n");
+          // printf("Array assignment\n");
         }
     ;
 
 print_stmt:
       KEYWORD LPAREN expression RPAREN SEMICOLON
         {
-            $$ = createPrint($3);
-            printf("Print statement created\n");
+           $$ = createPrint($3);
+            // printf("Print statement created\n");
         }
     ;
 
@@ -293,22 +296,22 @@ if_stmt:
       IF LPAREN condition RPAREN stmt_block
         {
           $$ = createIf($3, $5, NULL, NULL);
-          printf("If statement created\n");
+          // printf("If statement created\n");
         }
     | IF LPAREN condition RPAREN stmt_block ELSE stmt_block
         {
           $$ = createIf($3, $5, NULL, $7);
-          printf("If-else statement created\n");
+          // printf("If-else statement created\n");
         }
     | IF LPAREN condition RPAREN stmt_block elseif_list
         {
           $$ = createIf($3, $5, $6, NULL);
-          printf("If-elseif statement created\n");
+          // printf("If-elseif statement created\n");
         }
     | IF LPAREN condition RPAREN stmt_block elseif_list ELSE stmt_block
         {
           $$ = createIf($3, $5, $6, $8);
-          printf("If-elseif-else statement created\n");
+          // printf("If-elseif-else statement created\n");
         }
     ;
 
@@ -351,7 +354,7 @@ for_stmt:
       FOR LPAREN loop_init SEMICOLON condition SEMICOLON loop_update RPAREN stmt_block
         {
           $$ = createFor($3, $5, $7, $9);
-          printf("For loop created\n");
+          // printf("For loop created\n");
         }
     ;
 
@@ -368,9 +371,10 @@ loop_init:
           char varType;
           if (strcmp($1, "char") == 0) varType = 'c';
           else if (strcmp($1, "string") == 0) varType = 's';
+          else if (strcmp($1, "bool") == 0) varType = 'b';
           else varType = 'i';
           addVar($2, 1, $4->value, varType);
-          printf("Loop variable declaration: %s\n", $2);
+          // printf("Loop variable declaration: %s\n", $2);
       }
     | /* empty */ { $$ = NULL; }
     ;
@@ -435,7 +439,7 @@ while_stmt:
       WHILE LPAREN condition RPAREN stmt_block
         {
           $$ = createWhile($3, $5);
-          printf("While loop created\n");
+          // printf("While loop created\n");
         }
     ;
 
@@ -443,13 +447,16 @@ do_while_stmt:
       DO stmt_block WHILE LPAREN condition RPAREN SEMICOLON
         {
           $$ = createDoWhile($5, $2);
-          printf("Do-while loop created\n");
+          // printf("Do-while loop created\n");
         }
     ;
 
 expression:
       NUMBER             { $$ = createNum($1); }
     | CHAR_LITERAL       { $$ = createChar($1); }
+    | STRING_LITERAL     { $$ = createStringLiteral($1); }
+    | TRUE               { $$ = createBool(1); }
+    | FALSE              { $$ = createBool(0); }
     | IDENTIFIER         { 
           if (!isVarDeclared($1)) {
               errorUndeclaredVariable(yylineno, $1);

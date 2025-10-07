@@ -156,6 +156,18 @@ ASTNode* createChar(char c) {
     return node;
 }
 
+ASTNode* createBool(int value) {
+    ASTNode* node = newNode("bool");
+    node->value = value ? 1 : 0;  // Store as 1 (true) or 0 (false)
+    return node;
+}
+
+ASTNode* createStringLiteral(char* value) {
+    ASTNode* node = newNode("string_literal");
+    node->name = intern_string(value);
+    return node;
+}
+
 ASTNode* createStringDecl(char* name, char* value) {
     ASTNode* node = newNode("string_decl");
     node->name = intern_string(name);

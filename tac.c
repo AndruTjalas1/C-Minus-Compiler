@@ -137,6 +137,12 @@ TAC* genExprTac(ASTNode* node, char** place) {
         *place = newTemp();
         return makeTAC(TAC_CHAR, *place, buf, NULL);
     }
+    else if (strcmp(node->type, "bool") == 0) {
+        char buf[16];
+        sprintf(buf, "%d", node->value);  // Store as 0 or 1
+        *place = newTemp();
+        return makeTAC(TAC_NUM, *place, buf, NULL);
+    }
     else if (strcmp(node->type, "var") == 0) {
         *place = strdup(node->name);
         return NULL;
@@ -238,7 +244,7 @@ TAC* genStmtTac(ASTNode* node) {
         return makeTAC(TAC_ARRAY2D_DECL_INIT, node->name, buf1, buf2);
     }
     else if (strcmp(node->type, "if") == 0) {
-        printf("DEBUG: Processing if statement\n");
+        // printf("DEBUG: Processing if statement\n");
         
         /* Safety check */
         if (!node->condition) {
@@ -246,7 +252,7 @@ TAC* genStmtTac(ASTNode* node) {
             return NULL;
         }
         
-        printf("DEBUG: If condition exists, type=%s\n", node->condition->type ? node->condition->type : "NULL");
+        // printf("DEBUG: If condition exists, type=%s\n", node->condition->type ? node->condition->type : "NULL");
         
         /* Generate labels */
         char* elseLabel = newLabel();
@@ -339,9 +345,9 @@ TAC* genTAC(ASTNode* root) {
     if (!root) return NULL;
     
     // Debug output
-    if (root->type) {
-        printf("Generating TAC for: %s\n", root->type);
-    }
+    // if (root->type) {
+    //     printf("Generating TAC for: %s\n", root->type);
+    // }
     
     TAC* code = genStmtTac(root);
     if (root->next) {

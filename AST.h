@@ -32,6 +32,8 @@ ASTNode* createAssign(char* name, ASTNode* expr);
 ASTNode* createPrint(ASTNode* expr);
 ASTNode* createNum(int value);
 ASTNode* createChar(char c);
+ASTNode* createBool(int value);
+ASTNode* createStringLiteral(char* value);
 ASTNode* createStringDecl(char* name, char* value);
 ASTNode* createVar(char* name);
 ASTNode* createBinOp(char op, ASTNode* left, ASTNode* right);

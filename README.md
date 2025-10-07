@@ -1,7 +1,5 @@
 # CST-405 Compiler Project
 
-A fully-featured compiler that translates a C-like language into MIPS assembly code.
-
 ## Features
 
 ### Data Types
@@ -187,9 +185,7 @@ make
 
 ## Test Files Included
 
-- `simple_loop_test.c` - Basic loop examples
-- `test_loops.c` - Comprehensive loop testing
-- `test_operators.c` - Operator demonstrations
+- `test.c` - includes all features for testing
 
 ## Compiler Architecture
 
@@ -276,8 +272,9 @@ write(expression);
 
 ## Contributors
 
-CST-405 Compilers Course Project
+- Andru Tjalas
+- Tatum Hansen
 
 ---
 
-*For issues or questions, please refer to the course materials or contact the instructor.*
+

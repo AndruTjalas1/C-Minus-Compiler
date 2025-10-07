@@ -8,10 +8,65 @@ void genExprMips(ASTNode* node, FILE* out);
 void genStmtMips(ASTNode* node, FILE* out);
 Symbol* lookupSymbol(const char* name);
 void genConditionMips(ASTNode* condition, FILE* out, const char* jumpLabel);
+void collectStringLiterals(ASTNode* node, FILE* out);
+
+/* String literal counter for generating unique labels */
+static int stringLiteralCounter = 0;
+static int currentStringLiteralIndex = 0;
 
 /* Lookup helper */
 Symbol* lookupSymbol(const char* name) {
     return getSymbol(name);
+}
+
+/* Collect and generate string literals */
+void collectStringLiterals(ASTNode* node, FILE* out) {
+    if (!node) return;
+    
+    if (strcmp(node->type, "string_literal") == 0) {
+        fprintf(out, "str_lit_%d: .asciiz \"%s\"\n", stringLiteralCounter, node->name);
+        stringLiteralCounter++;
+    }
+    
+    // Recursively traverse the AST
+    if (node->left) collectStringLiterals(node->left, out);
+    if (node->right) collectStringLiterals(node->right, out);
+    if (node->next) collectStringLiterals(node->next, out);
+    if (node->condition) collectStringLiterals(node->condition, out);
+    if (node->ifBlock) collectStringLiterals(node->ifBlock, out);
+    if (node->elseifList) collectStringLiterals(node->elseifList, out);
+    if (node->elseBlock) collectStringLiterals(node->elseBlock, out);
+    if (node->loopInit) collectStringLiterals(node->loopInit, out);
+    if (node->loopUpdate) collectStringLiterals(node->loopUpdate, out);
+    if (node->loopBody) collectStringLiterals(node->loopBody, out);
+}
+
+/* Helper to find string literal index */
+int getStringLiteralIndex(ASTNode* root, ASTNode* target) {
+    static int searchIndex;
+    if (root == NULL) return -1;
+    
+    // Reset search on new traversal
+    if (root->type && strcmp(root->type, "string_literal") == 0) {
+        if (root == target) {
+            return searchIndex++;
+        }
+        searchIndex++;
+    }
+    
+    int result = -1;
+    if (root->left && (result = getStringLiteralIndex(root->left, target)) >= 0) return result;
+    if (root->right && (result = getStringLiteralIndex(root->right, target)) >= 0) return result;
+    if (root->next && (result = getStringLiteralIndex(root->next, target)) >= 0) return result;
+    if (root->condition && (result = getStringLiteralIndex(root->condition, target)) >= 0) return result;
+    if (root->ifBlock && (result = getStringLiteralIndex(root->ifBlock, target)) >= 0) return result;
+    if (root->elseifList && (result = getStringLiteralIndex(root->elseifList, target)) >= 0) return result;
+    if (root->elseBlock && (result = getStringLiteralIndex(root->elseBlock, target)) >= 0) return result;
+    if (root->loopInit && (result = getStringLiteralIndex(root->loopInit, target)) >= 0) return result;
+    if (root->loopUpdate && (result = getStringLiteralIndex(root->loopUpdate, target)) >= 0) return result;
+    if (root->loopBody && (result = getStringLiteralIndex(root->loopBody, target)) >= 0) return result;
+    
+    return -1;
 }
 
 /* Generate MIPS for expressions */
@@ -23,6 +78,12 @@ void genExprMips(ASTNode* node, FILE* out) {
     }
     else if (strcmp(node->type, "char") == 0) {
         fprintf(out, "    li $t0, %d\n", node->value);
+    }
+    else if (strcmp(node->type, "bool") == 0) {
+        fprintf(out, "    li $t0, %d\n", node->value);  // 0 for false, 1 for true
+    }
+    else if (strcmp(node->type, "string_literal") == 0) {
+        fprintf(out, "    la $t0, str_lit_%d\n", currentStringLiteralIndex++);
     } 
     else if (strcmp(node->type, "var") == 0) {
         Symbol* sym = lookupSymbol(node->name);
@@ -338,6 +399,15 @@ void genStmtMips(ASTNode* node, FILE* out) {
             }
         }
         else if (strcmp(p->type, "print") == 0) {
+            // Check if printing a string literal
+            if (p->left && strcmp(p->left->type, "string_literal") == 0) {
+                genExprMips(p->left, out);
+                fprintf(out, "    move $a0, $t0\n");
+                fprintf(out, "    li $v0, 4\n    syscall\n");
+                fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n");
+                p = p->next;
+                continue;
+            }
             // Check if printing a string variable
             if (p->left && strcmp(p->left->type, "var") == 0) {
                 Symbol* sym = lookupSymbol(p->left->name);
@@ -539,7 +609,14 @@ void generateMIPS(ASTNode* root, const char* filename) {
         return;
     }
 
+    // Reset counters for new compilation
+    stringLiteralCounter = 0;
+    currentStringLiteralIndex = 0;
+
     fprintf(out, ".data\n");
+    
+    // Collect and generate string literals
+    collectStringLiterals(root, out);
 
     // Iterate through hash table buckets for string and char declarations
     for (int i = 0; i < HASH_SIZE; i++) {
@@ -561,11 +638,11 @@ void generateMIPS(ASTNode* root, const char* filename) {
     
     fprintf(out, ".align 2\n");
     
-    // Iterate through hash table buckets for int declarations
+    // Iterate through hash table buckets for int and bool declarations
     for (int i = 0; i < HASH_SIZE; i++) {
         Symbol* s = symtab.buckets[i];
         while (s) {
-            if (s->type == 'i') {
+            if (s->type == 'i' || s->type == 'b') {
                 if (s->dimensions == 0) {
                     fprintf(out, "var_%s: .word %d\n", s->name, s->initial_value);
                 } else {
