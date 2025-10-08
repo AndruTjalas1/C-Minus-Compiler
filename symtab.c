@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "AST.h"
 #include "symtab.h"
 #include "stringpool.h"
 
@@ -21,6 +22,8 @@ void initSymTab() {
     symtab.nextOffset = 0;
     symtab.lookups = 0;
     symtab.collisions = 0;
+    symtab.functions = NULL;
+    symtab.currentFunction = NULL;
 }
 
 static Symbol* createSymbol(char* name) {
@@ -284,4 +287,114 @@ void print_symtab_stats() {
         printf("Average chain length: %.2f\n", 
                (double)symtab.count / used_buckets);
     }
+}
+
+/* ========== FUNCTION MANAGEMENT ========== */
+
+int addFunction(char* name, char* returnType, struct ASTNode* params) {
+    if (isFunctionDeclared(name)) {
+        fprintf(stderr, "Error: Function '%s' already declared\n", name);
+        return 0;
+    }
+    
+    FunctionSymbol* func = malloc(sizeof(FunctionSymbol));
+    func->name = intern_string(name);
+    func->returnType = intern_string(returnType);
+    
+    // Count parameters
+    int paramCount = 0;
+    struct ASTNode* p = params;
+    while (p) {
+        paramCount++;
+        p = p->next;
+    }
+    
+    func->paramCount = paramCount;
+    if (paramCount > 0) {
+        func->paramTypes = malloc(paramCount * sizeof(char*));
+        func->paramNames = malloc(paramCount * sizeof(char*));
+        
+        p = params;
+        int i = 0;
+        while (p) {
+            func->paramTypes[i] = intern_string(p->returnType);
+            func->paramNames[i] = intern_string(p->name);
+            i++;
+            p = p->next;
+        }
+    } else {
+        func->paramTypes = NULL;
+        func->paramNames = NULL;
+    }
+    
+    func->stackSize = 0;
+    func->next = symtab.functions;
+    symtab.functions = func;
+    
+    return 1;
+}
+
+FunctionSymbol* getFunction(const char* name) {
+    FunctionSymbol* func = symtab.functions;
+    while (func) {
+        if (strcmp(func->name, name) == 0) {
+            return func;
+        }
+        func = func->next;
+    }
+    return NULL;
+}
+
+int isFunctionDeclared(const char* name) {
+    return getFunction(name) != NULL;
+}
+
+int validateFunctionCall(const char* name, struct ASTNode* args) {
+    FunctionSymbol* func = getFunction(name);
+    if (!func) {
+        fprintf(stderr, "Error: Undefined function '%s'\n", name);
+        return 0;
+    }
+    
+    // Count arguments
+    int argCount = 0;
+    struct ASTNode* arg = args;
+    while (arg) {
+        argCount++;
+        arg = arg->next;
+    }
+    
+    // Check parameter count
+    if (argCount != func->paramCount) {
+        fprintf(stderr, "Error: Function '%s' expects %d arguments, got %d\n",
+                name, func->paramCount, argCount);
+        return 0;
+    }
+    
+    return 1;
+}
+
+void enterFunctionScope(const char* funcName) {
+    FunctionSymbol* func = getFunction(funcName);
+    if (!func) return;
+    
+    symtab.currentFunction = func;
+    
+    // Add parameters to symbol table as local variables
+    for (int i = 0; i < func->paramCount; i++) {
+        char varType;
+        if (strcmp(func->paramTypes[i], "int") == 0) varType = 'i';
+        else if (strcmp(func->paramTypes[i], "char") == 0) varType = 'c';
+        else if (strcmp(func->paramTypes[i], "bool") == 0) varType = 'b';
+        else if (strcmp(func->paramTypes[i], "string") == 0) varType = 's';
+        else varType = 'i';
+        
+        addVar(func->paramNames[i], 1, 0, varType);
+    }
+}
+
+void exitFunctionScope() {
+    if (!symtab.currentFunction) return;
+    symtab.currentFunction->stackSize = symtab.nextOffset;
+    symtab.currentFunction = NULL;
 }

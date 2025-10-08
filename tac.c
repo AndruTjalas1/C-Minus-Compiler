@@ -181,6 +181,24 @@ TAC* genExprTac(ASTNode* node, char** place) {
         }
         return concat(concat(c1, c2), makeTAC(op, *place, t1, t2));
     }
+    else if (strcmp(node->type, "function_call") == 0) {
+        // Generate code for arguments
+        TAC* argCode = NULL;
+        ASTNode* arg = node->args;
+        while (arg) {
+            char* argPlace;
+            TAC* argExpr = genExprTac(arg, &argPlace);
+            TAC* argTac = makeTAC(TAC_ARG, argPlace, NULL, NULL);
+            argCode = concat(argCode, argExpr);
+            argCode = concat(argCode, argTac);
+            arg = arg->next;
+        }
+        
+        // Generate the call itself
+        *place = newTemp();
+        TAC* call = makeTAC(TAC_CALL, *place, node->name, NULL);
+        return concat(argCode, call);
+    }
 
     return NULL;
 }
@@ -335,6 +353,62 @@ TAC* genStmtTac(ASTNode* node) {
         result = concat(result, makeTAC(TAC_LABEL, endLabel, NULL, NULL));
         
         return result;
+    }
+    else if (strcmp(node->type, "function_decl") == 0) {
+        // Generate function begin marker
+        TAC* funcBegin = makeTAC(TAC_FUNCTION_BEGIN, node->name, node->returnType, NULL);
+        
+        // Generate parameter declarations
+        TAC* paramCode = NULL;
+        ASTNode* param = node->params;
+        while (param) {
+            TAC* paramTac = makeTAC(TAC_PARAM, param->name, param->returnType, NULL);
+            paramCode = concat(paramCode, paramTac);
+            param = param->next;
+        }
+        
+        // Generate function body
+        TAC* bodyCode = genTAC(node->body);
+        
+        // Generate function end marker
+        TAC* funcEnd = makeTAC(TAC_FUNCTION_END, node->name, NULL, NULL);
+        
+        // Concatenate all parts
+        TAC* result = concat(funcBegin, paramCode);
+        result = concat(result, bodyCode);
+        result = concat(result, funcEnd);
+        
+        return result;
+    }
+    else if (strcmp(node->type, "function_call") == 0) {
+        // Generate code for arguments
+        TAC* argCode = NULL;
+        ASTNode* arg = node->args;
+        while (arg) {
+            char* argPlace;
+            TAC* argExpr = genExprTac(arg, &argPlace);
+            TAC* argTac = makeTAC(TAC_ARG, argPlace, NULL, NULL);
+            argCode = concat(argCode, argExpr);
+            argCode = concat(argCode, argTac);
+            arg = arg->next;
+        }
+        
+        // Generate the call itself
+        char* resultTemp = newTemp();
+        TAC* call = makeTAC(TAC_CALL, resultTemp, node->name, NULL);
+        return concat(argCode, call);
+    }
+    else if (strcmp(node->type, "return") == 0) {
+        if (node->left) {
+            // Return with value
+            char* returnPlace;
+            TAC* exprCode = genExprTac(node->left, &returnPlace);
+            TAC* returnTac = makeTAC(TAC_RETURN, returnPlace, NULL, NULL);
+            return concat(exprCode, returnTac);
+        } else {
+            // Return without value
+            return makeTAC(TAC_RETURN, NULL, NULL, NULL);
+        }
     }
 
     return NULL;
@@ -703,6 +777,12 @@ void generateTAC(ASTNode* root, const char* filename) {
                 case TAC_IF_LE: fprintf(unoptFile, "if %s <= %s goto %s\n", cur->arg1, cur->arg2, cur->res); break;
                 case TAC_IF_GT: fprintf(unoptFile, "if %s > %s goto %s\n", cur->arg1, cur->arg2, cur->res); break;
                 case TAC_IF_GE: fprintf(unoptFile, "if %s >= %s goto %s\n", cur->arg1, cur->arg2, cur->res); break;
+                case TAC_FUNCTION_BEGIN: fprintf(unoptFile, "\nfunction %s(%s):\n", cur->res, cur->arg1 ? cur->arg1 : "void"); break;
+                case TAC_FUNCTION_END: fprintf(unoptFile, "end function %s\n\n", cur->res); break;
+                case TAC_PARAM: fprintf(unoptFile, "param %s %s\n", cur->arg1, cur->res); break;
+                case TAC_CALL: fprintf(unoptFile, "%s = call %s\n", cur->res, cur->arg1); break;
+                case TAC_RETURN: fprintf(unoptFile, "return %s\n", cur->res ? cur->res : ""); break;
+                case TAC_ARG: fprintf(unoptFile, "arg %s\n", cur->res); break;
             }
             cur = cur->next;
         }
@@ -799,6 +879,24 @@ void generateTAC(ASTNode* root, const char* filename) {
                 break;
             case TAC_IF_GE:
                 fprintf(out, "if %s >= %s goto %s\n", cur->arg1, cur->arg2, cur->res);
+                break;
+            case TAC_FUNCTION_BEGIN:
+                fprintf(out, "\nfunction %s(%s):\n", cur->res, cur->arg1 ? cur->arg1 : "void");
+                break;
+            case TAC_FUNCTION_END:
+                fprintf(out, "end function %s\n\n", cur->res);
+                break;
+            case TAC_PARAM:
+                fprintf(out, "param %s %s\n", cur->arg1, cur->res);
+                break;
+            case TAC_CALL:
+                fprintf(out, "%s = call %s\n", cur->res, cur->arg1);
+                break;
+            case TAC_RETURN:
+                fprintf(out, "return %s\n", cur->res ? cur->res : "");
+                break;
+            case TAC_ARG:
+                fprintf(out, "arg %s\n", cur->res);
                 break;
         }
         cur = cur->next;

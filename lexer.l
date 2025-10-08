@@ -63,6 +63,12 @@ STRING \"[^\"]*\"
 "for"       { return FOR; }
 "while"     { return WHILE; }
 "do"        { return DO; }
+"function"  { return FUNCTION; }
+"return"    { return RETURN; }
+"void"      { 
+    yylval.str = strdup("void"); 
+    return TYPE; 
+}
 
 {ID}        { 
     yylval.str = strdup(yytext); 

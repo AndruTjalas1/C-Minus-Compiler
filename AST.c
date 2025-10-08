@@ -314,3 +314,50 @@ ASTNode* createDoWhile(ASTNode* condition, ASTNode* body) {
     node->loopBody = body;
     return node;
 }
+
+/* ========== FUNCTION-RELATED NODE CREATION ========== */
+
+ASTNode* createFunctionDecl(char* returnType, char* name, ASTNode* params, ASTNode* body) {
+    ASTNode* node = newNode("function_decl");
+    node->returnType = intern_string(returnType);
+    node->name = intern_string(name);
+    node->params = params;
+    node->body = body;
+    return node;
+}
+
+ASTNode* createParam(char* type, char* name) {
+    ASTNode* node = newNode("param");
+    node->returnType = intern_string(type);
+    node->name = intern_string(name);
+    return node;
+}
+
+ASTNode* createParamList(ASTNode* list, ASTNode* param) {
+    if (!list) return param;
+    ASTNode* p = list;
+    while (p->next) p = p->next;
+    p->next = param;
+    return list;
+}
+
+ASTNode* createFunctionCall(char* name, ASTNode* args) {
+    ASTNode* node = newNode("function_call");
+    node->name = intern_string(name);
+    node->args = args;
+    return node;
+}
+
+ASTNode* createArgList(ASTNode* list, ASTNode* arg) {
+    if (!list) return arg;
+    ASTNode* p = list;
+    while (p->next) p = p->next;
+    p->next = arg;
+    return list;
+}
+
+ASTNode* createReturn(ASTNode* expr) {
+    ASTNode* node = newNode("return");
+    node->left = expr;
+    return node;
+}

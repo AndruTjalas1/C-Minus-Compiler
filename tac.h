@@ -29,7 +29,13 @@ typedef enum {
     TAC_IF_LT,             // if arg1 < arg2 goto res
     TAC_IF_LE,             // if arg1 <= arg2 goto res
     TAC_IF_GT,             // if arg1 > arg2 goto res
-    TAC_IF_GE              // if arg1 >= arg2 goto res
+    TAC_IF_GE,             // if arg1 >= arg2 goto res
+    TAC_FUNCTION_BEGIN,    // Start of function definition
+    TAC_FUNCTION_END,      // End of function definition
+    TAC_PARAM,             // Function parameter
+    TAC_CALL,              // Function call
+    TAC_RETURN,            // Return statement
+    TAC_ARG                // Function call argument
 } TACOp;
 
 /* TAC instruction representation */

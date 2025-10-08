@@ -1,8 +1,21 @@
 #ifndef SYMTAB_H
 #define SYMTAB_H
 
+// Forward declaration to avoid circular dependency
+struct ASTNode;
+
 #define HASH_SIZE 211  // Prime number for better distribution
 #define MAX_VARS 1000  // Increased capacity
+
+typedef struct FunctionSymbol {
+    char* name;
+    char* returnType;
+    int paramCount;
+    char** paramTypes;
+    char** paramNames;
+    int stackSize;
+    struct FunctionSymbol* next;
+} FunctionSymbol;
 
 typedef struct Symbol {
     char* name;
@@ -20,6 +33,8 @@ typedef struct Symbol {
 
 typedef struct SymbolTable {
     Symbol* buckets[HASH_SIZE];
+    FunctionSymbol* functions;
+    FunctionSymbol* currentFunction;
     int count;
     int nextOffset;
     // Performance counters
@@ -43,5 +58,13 @@ int getVarOffset(const char* name);
 int isVarDeclared(const char* name);
 Symbol* getSymbol(const char* name);
 void print_symtab_stats();
+
+// Function management
+int addFunction(char* name, char* returnType, struct ASTNode* params);
+FunctionSymbol* getFunction(const char* name);
+int isFunctionDeclared(const char* name);
+int validateFunctionCall(const char* name, struct ASTNode* args);
+void enterFunctionScope(const char* funcName);
+void exitFunctionScope();
 
 #endif

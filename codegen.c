@@ -14,6 +14,9 @@ void collectStringLiterals(ASTNode* node, FILE* out);
 static int stringLiteralCounter = 0;
 static int currentStringLiteralIndex = 0;
 
+/* Current function name for return statements */
+static const char* currentFunctionName = NULL;
+
 /* Lookup helper */
 Symbol* lookupSymbol(const char* name) {
     return getSymbol(name);
@@ -147,7 +150,51 @@ void genExprMips(ASTNode* node, FILE* out) {
             fprintf(out, "    add $t1, $t1, $t0\n");
             fprintf(out, "    lw $t0, 0($t1)\n");
         }
-    } 
+    }
+    else if (strcmp(node->type, "function_call") == 0) {
+        // Save $ra and any needed registers
+        fprintf(out, "    # Function call: %s\n", node->name);
+        fprintf(out, "    addi $sp, $sp, -4\n");
+        fprintf(out, "    sw $ra, 0($sp)\n");
+        
+        // Push arguments onto stack (in reverse order for correct ordering)
+        int argCount = 0;
+        ASTNode* arg = node->args;
+        while (arg) {
+            argCount++;
+            arg = arg->next;
+        }
+        
+        // Allocate space for arguments
+        if (argCount > 0) {
+            fprintf(out, "    addi $sp, $sp, -%d\n", argCount * 4);
+        }
+        
+        // Evaluate and store arguments
+        arg = node->args;
+        int offset = 0;
+        while (arg) {
+            genExprMips(arg, out);
+            fprintf(out, "    sw $t0, %d($sp)\n", offset);
+            offset += 4;
+            arg = arg->next;
+        }
+        
+        // Call the function
+        fprintf(out, "    jal func_%s\n", node->name);
+        
+        // Clean up arguments from stack
+        if (argCount > 0) {
+            fprintf(out, "    addi $sp, $sp, %d\n", argCount * 4);
+        }
+        
+        // Restore $ra
+        fprintf(out, "    lw $ra, 0($sp)\n");
+        fprintf(out, "    addi $sp, $sp, 4\n");
+        
+        // Result is in $v0, move to $t0
+        fprintf(out, "    move $t0, $v0\n");
+    }
     else if (strcmp(node->type, "binop") == 0) {
         fprintf(out, "    sw $s0, -4($sp)\n");
         fprintf(out, "    addiu $sp, $sp, -4\n");
@@ -597,6 +644,62 @@ void genStmtMips(ASTNode* node, FILE* out) {
                 fprintf(out, "    j %s\n", startLabel);
             }
         }
+        else if (strcmp(p->type, "function_decl") == 0) {
+            // Generate function label
+            fprintf(out, "\n# Function: %s\n", p->name);
+            fprintf(out, "func_%s:\n", p->name);
+            
+            // Set current function name for return statements
+            currentFunctionName = p->name;
+            
+            // Function prologue - save frame pointer and return address
+            fprintf(out, "    # Function prologue\n");
+            fprintf(out, "    addi $sp, $sp, -8\n");
+            fprintf(out, "    sw $fp, 4($sp)\n");
+            fprintf(out, "    sw $ra, 0($sp)\n");
+            fprintf(out, "    move $fp, $sp\n");
+            
+            // Load parameters from stack into local variables
+            // Parameters are at $fp + 8 onwards (after saved $ra and $fp)
+            int paramOffset = 8;
+            ASTNode* param = p->params;
+            while (param) {
+                fprintf(out, "    lw $t0, %d($fp)\n", paramOffset);
+                fprintf(out, "    sw $t0, var_%s\n", param->name);
+                paramOffset += 4;
+                param = param->next;
+            }
+            
+            // Generate function body
+            genStmtMips(p->body, out);
+            
+            // Function epilogue (in case no explicit return)
+            fprintf(out, "    # Function epilogue\n");
+            fprintf(out, "func_%s_exit:\n", p->name);
+            fprintf(out, "    move $sp, $fp\n");
+            fprintf(out, "    lw $ra, 0($sp)\n");
+            fprintf(out, "    lw $fp, 4($sp)\n");
+            fprintf(out, "    addi $sp, $sp, 8\n");
+            fprintf(out, "    jr $ra\n");
+            
+            // Reset current function name
+            currentFunctionName = NULL;
+        }
+        else if (strcmp(p->type, "function_call") == 0) {
+            // Function call as statement (not expression)
+            genExprMips(p, out);
+        }
+        else if (strcmp(p->type, "return") == 0) {
+            if (p->left) {
+                // Return with value
+                genExprMips(p->left, out);
+                fprintf(out, "    move $v0, $t0\n");
+            }
+            // Jump to function exit using current function name
+            if (currentFunctionName) {
+                fprintf(out, "    j func_%s_exit\n", currentFunctionName);
+            }
+        }
         p = p->next;
     }
 }
@@ -653,8 +756,33 @@ void generateMIPS(ASTNode* root, const char* filename) {
         }
     }
 
-    fprintf(out, ".text\n.globl main\nmain:\n");
-    genStmtMips(root, out);
+    fprintf(out, ".text\n.globl main\n");
+    
+    // First pass: Generate all function definitions
+    ASTNode* p = root;
+    while (p) {
+        if (strcmp(p->type, "function_decl") == 0) {
+            // Generate function code (single node, not recursive)
+            ASTNode temp = *p;
+            temp.next = NULL;
+            genStmtMips(&temp, out);
+        }
+        p = p->next;
+    }
+    
+    // Generate main program code
+    fprintf(out, "\nmain:\n");
+    p = root;
+    while (p) {
+        if (strcmp(p->type, "function_decl") != 0) {
+            // Create a temporary node list for just this statement
+            ASTNode temp = *p;
+            temp.next = NULL;
+            genStmtMips(&temp, out);
+        }
+        p = p->next;
+    }
+    
     fprintf(out, "    li $v0, 10\n    syscall\n");
     fclose(out);
 }

@@ -36,6 +36,7 @@ int* extractInitValues(ASTNode* initList, int* count);
 %token LPAREN RPAREN
 %token IF ELSEIF ELSE
 %token FOR WHILE DO
+%token FUNCTION RETURN
 %token EQEQ NEQ LT LE GT GE
 %token AND OR NOT XOR
 %token <num> TRUE FALSE
@@ -45,6 +46,7 @@ int* extractInitValues(ASTNode* initList, int* count);
 %type <node> program stmt declaration assignment expression print_stmt
 %type <node> array_access init_list if_stmt condition stmt_block elseif_list stmt_list
 %type <node> for_stmt while_stmt do_while_stmt loop_init loop_update
+%type <node> function_def param_list param function_call arg_list return_stmt
 
 %left OR
 %left XOR
@@ -58,8 +60,9 @@ int* extractInitValues(ASTNode* initList, int* count);
 %%
 
 program:
-      program stmt       { root = createStmtList(root, $2); $$ = root; }
-    | /* empty */        { $$ = NULL; }
+      program stmt          { root = createStmtList(root, $2); $$ = root; }
+    | program function_def  { root = createStmtList(root, $2); $$ = root; }
+    | /* empty */           { $$ = NULL; }
     ;
 
 stmt:
@@ -70,6 +73,8 @@ stmt:
     | for_stmt
     | while_stmt
     | do_while_stmt
+    | function_call SEMICOLON { $$ = $1; }
+    | return_stmt
     ;
 
 declaration:
@@ -451,6 +456,92 @@ do_while_stmt:
         }
     ;
 
+function_def:
+      FUNCTION TYPE IDENTIFIER LPAREN param_list RPAREN 
+        {
+          // Mid-rule action: Add function and parameters BEFORE parsing body
+          if (!addFunction($3, $2, $5)) {
+              fprintf(stderr, "Failed to add function '%s'\n", $3);
+              exit(1);
+          }
+          
+          // Add parameters as local variables before parsing function body
+          ASTNode* param = $5;
+          while (param) {
+              char varType;
+              if (strcmp(param->returnType, "char") == 0) varType = 'c';
+              else if (strcmp(param->returnType, "string") == 0) varType = 's';
+              else if (strcmp(param->returnType, "bool") == 0) varType = 'b';
+              else varType = 'i';
+              addVar(param->name, 1, 0, varType);
+              param = param->next;
+          }
+        }
+      LBRACE stmt_list RBRACE
+        {
+          $$ = createFunctionDecl($2, $3, $5, $9);
+          // printf("Function declaration: %s\n", $3);
+        }
+    | FUNCTION TYPE IDENTIFIER LPAREN RPAREN 
+        {
+          // Mid-rule action for function with no parameters
+          if (!addFunction($3, $2, NULL)) {
+              fprintf(stderr, "Failed to add function '%s'\n", $3);
+              exit(1);
+          }
+        }
+      LBRACE stmt_list RBRACE
+        {
+          $$ = createFunctionDecl($2, $3, NULL, $8);
+          // printf("Function declaration: %s (no params)\n", $3);
+        }
+    ;
+
+param_list:
+      param                      { $$ = $1; }
+    | param_list COMMA param     { $$ = createParamList($1, $3); }
+    ;
+
+param:
+      TYPE IDENTIFIER
+        {
+          $$ = createParam($1, $2);
+        }
+    ;
+
+function_call:
+      IDENTIFIER LPAREN arg_list RPAREN
+        {
+          if (!validateFunctionCall($1, $3)) {
+              exit(1);
+          }
+          $$ = createFunctionCall($1, $3);
+        }
+    | IDENTIFIER LPAREN RPAREN
+        {
+          if (!validateFunctionCall($1, NULL)) {
+              exit(1);
+          }
+          $$ = createFunctionCall($1, NULL);
+        }
+    ;
+
+arg_list:
+      expression                 { $$ = $1; }
+    | arg_list COMMA expression  { $$ = createArgList($1, $3); }
+    ;
+
+return_stmt:
+      RETURN expression SEMICOLON
+        {
+          $$ = createReturn($2);
+        }
+    | RETURN SEMICOLON
+        {
+          $$ = createReturn(NULL);
+        }
+    ;
+
 expression:
       NUMBER             { $$ = createNum($1); }
     | CHAR_LITERAL       { $$ = createChar($1); }
@@ -458,12 +549,13 @@ expression:
     | TRUE               { $$ = createBool(1); }
     | FALSE              { $$ = createBool(0); }
     | IDENTIFIER         { 
-          if (!isVarDeclared($1)) {
+          if (!isVarDeclared($1) && !isFunctionDeclared($1)) {
               errorUndeclaredVariable(yylineno, $1);
               exit(1);
           }
           $$ = createVar($1); 
       }
+    | function_call      { $$ = $1; }
     | array_access       { $$ = $1; }
     | '(' expression ')' { $$ = $2; }
     | expression PLUS expression     { $$ = createBinOp('+', $1, $3); }

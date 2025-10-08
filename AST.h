@@ -17,6 +17,11 @@ typedef struct ASTNode {
     struct ASTNode* loopInit;
     struct ASTNode* loopUpdate;
     struct ASTNode* loopBody;
+    // Function-related fields
+    char* returnType;
+    struct ASTNode* params;
+    struct ASTNode* body;
+    struct ASTNode* args;
 } ASTNode;
 
 // Memory pool functions
@@ -52,5 +57,13 @@ ASTNode* createElseIfList(ASTNode* list, ASTNode* condition, ASTNode* block);
 ASTNode* createFor(ASTNode* init, ASTNode* condition, ASTNode* update, ASTNode* body);
 ASTNode* createWhile(ASTNode* condition, ASTNode* body);
 ASTNode* createDoWhile(ASTNode* condition, ASTNode* body);
+
+// Function-related node creation
+ASTNode* createFunctionDecl(char* returnType, char* name, ASTNode* params, ASTNode* body);
+ASTNode* createParam(char* type, char* name);
+ASTNode* createParamList(ASTNode* list, ASTNode* param);
+ASTNode* createFunctionCall(char* name, ASTNode* args);
+ASTNode* createArgList(ASTNode* list, ASTNode* arg);
+ASTNode* createReturn(ASTNode* expr);
 
 #endif
