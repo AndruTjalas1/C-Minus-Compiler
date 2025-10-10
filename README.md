@@ -68,6 +68,13 @@
 - **do-while loops**: `do { body } while (condition);`
 - Nested loops supported
 
+### Functions
+- **Function Definitions**: Define reusable code blocks
+- **Parameters**: Pass values to functions
+- **Return Values**: Functions can return values
+- **Recursion**: Full support for recursive function calls
+- **Function Calls**: Call functions from anywhere in your code
+
 ### Built-in Functions
 - `write(expression)` - Output values to console
 
@@ -185,7 +192,51 @@ make
 
 ## Test Files Included
 
-- `test.c` - includes all features for testing
+- `test.c` - Basic feature testing
+- `test_functions.c` - Function definitions and calls including factorial
+- `test_recursive.c` - **6 recursive function examples:**
+  - Factorial
+  - Fibonacci
+  - Sum to N
+  - Power (exponentiation)
+  - GCD (Euclidean algorithm)
+  - Countdown
+- `test_advanced_recursion.c` - Advanced recursive examples:
+  - Ackermann function
+  - Tower of Hanoi
+  - Digital root
+- `test_errors.c` - Error handling tests
+- `test_performance.sh` - Performance benchmarking
+
+## Recursive Functions
+
+**Your compiler fully supports recursive functions!** See `RECURSION_GUIDE.md` for a detailed explanation.
+
+### Quick Recursive Example
+```c
+function int factorial(int n) {
+    if (n <= 1) {
+        return 1;
+    }
+    int prev;
+    prev = n - 1;
+    int prevFact;
+    prevFact = factorial(prev);  // Recursive call
+    return n * prevFact;
+}
+
+int result;
+result = factorial(5);  // Returns 120
+write(result);
+```
+
+### How Recursion Works
+- Each function call gets its own stack frame
+- Return addresses are properly saved and restored
+- Parameters and local variables are independent per call
+- Base cases prevent infinite recursion
+
+**See `RECURSION_GUIDE.md` for complete documentation!**
 
 ## Compiler Architecture
 
@@ -255,7 +306,6 @@ write(expression);
 
 ## Known Limitations
 
-- No function definitions (only main)
 - No pointers
 - No structs or user-defined types
 - Integer arithmetic only (no floating point)
@@ -263,7 +313,6 @@ write(expression);
 
 ## Future Enhancements
 
-- Function definitions and calls
 - Break and continue statements
 - Switch-case statements
 - Additional built-in functions

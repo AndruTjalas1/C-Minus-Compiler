@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "AST.h"
 #include "symtab.h"
@@ -16,6 +17,47 @@ static int currentStringLiteralIndex = 0;
 
 /* Current function name for return statements */
 static const char* currentFunctionName = NULL;
+
+/* Track local variables for current function */
+typedef struct LocalVar {
+    char* name;
+    int offset;  // Offset from $fp (negative for locals, positive for params)
+    struct LocalVar* next;
+} LocalVar;
+
+static LocalVar* currentFunctionLocals = NULL;
+
+static void addLocalVar(const char* name, int offset) {
+    LocalVar* lv = malloc(sizeof(LocalVar));
+    lv->name = strdup(name);
+    lv->offset = offset;
+    lv->next = currentFunctionLocals;
+    currentFunctionLocals = lv;
+}
+
+static int getLocalVarOffset(const char* name, int* found) {
+    LocalVar* lv = currentFunctionLocals;
+    while (lv) {
+        if (strcmp(lv->name, name) == 0) {
+            *found = 1;
+            return lv->offset;
+        }
+        lv = lv->next;
+    }
+    *found = 0;
+    return 0;
+}
+
+static void clearLocalVars() {
+    LocalVar* lv = currentFunctionLocals;
+    while (lv) {
+        LocalVar* next = lv->next;
+        free(lv->name);
+        free(lv);
+        lv = next;
+    }
+    currentFunctionLocals = NULL;
+}
 
 /* Lookup helper */
 Symbol* lookupSymbol(const char* name) {
@@ -89,20 +131,28 @@ void genExprMips(ASTNode* node, FILE* out) {
         fprintf(out, "    la $t0, str_lit_%d\n", currentStringLiteralIndex++);
     } 
     else if (strcmp(node->type, "var") == 0) {
-        Symbol* sym = lookupSymbol(node->name);
-        if (!sym) {
-            fprintf(stderr, "Error: undeclared variable '%s'\n", node->name);
-            return;
-        }
-        // Check if it's a string variable
-        if (sym->stringValue) {
-            fprintf(out, "    la $t0, var_%s\n", sym->name);  // load string address
-        }
-        else if (sym->type == 'c') {
-            fprintf(out, "    lb $t0, var_%s\n", sym->name);
-        }
-        else {
-            fprintf(out, "    lw $t0, var_%s\n", sym->name);
+        // Check if it's a local variable first
+        int found = 0;
+        int offset = getLocalVarOffset(node->name, &found);
+        if (found && currentFunctionName) {
+            fprintf(out, "    lw $t0, %d($fp)\n", offset);
+        } else {
+            // Global variable
+            Symbol* sym = lookupSymbol(node->name);
+            if (!sym) {
+                fprintf(stderr, "Error: undeclared variable '%s'\n", node->name);
+                return;
+            }
+            // Check if it's a string variable
+            if (sym->stringValue) {
+                fprintf(out, "    la $t0, var_%s\n", sym->name);  // load string address
+            }
+            else if (sym->type == 'c') {
+                fprintf(out, "    lb $t0, var_%s\n", sym->name);
+            }
+            else {
+                fprintf(out, "    lw $t0, var_%s\n", sym->name);
+            }
         }
     }
     else if (strcmp(node->type, "array_access") == 0) {
@@ -152,12 +202,10 @@ void genExprMips(ASTNode* node, FILE* out) {
         }
     }
     else if (strcmp(node->type, "function_call") == 0) {
-        // Save $ra and any needed registers
+        // Function call - modern calling convention
         fprintf(out, "    # Function call: %s\n", node->name);
-        fprintf(out, "    addi $sp, $sp, -4\n");
-        fprintf(out, "    sw $ra, 0($sp)\n");
         
-        // Push arguments onto stack (in reverse order for correct ordering)
+        // Count arguments
         int argCount = 0;
         ASTNode* arg = node->args;
         while (arg) {
@@ -165,19 +213,25 @@ void genExprMips(ASTNode* node, FILE* out) {
             arg = arg->next;
         }
         
-        // Allocate space for arguments
+        // Push arguments onto stack in reverse order (right-to-left)
+        // First, collect arguments in array for reverse iteration
         if (argCount > 0) {
-            fprintf(out, "    addi $sp, $sp, -%d\n", argCount * 4);
-        }
-        
-        // Evaluate and store arguments
-        arg = node->args;
-        int offset = 0;
-        while (arg) {
-            genExprMips(arg, out);
-            fprintf(out, "    sw $t0, %d($sp)\n", offset);
-            offset += 4;
-            arg = arg->next;
+            ASTNode** argArray = malloc(argCount * sizeof(ASTNode*));
+            arg = node->args;
+            int i = 0;
+            while (arg) {
+                argArray[i++] = arg;
+                arg = arg->next;
+            }
+            
+            // Push in reverse order
+            for (i = argCount - 1; i >= 0; i--) {
+                genExprMips(argArray[i], out);
+                fprintf(out, "    addi $sp, $sp, -4\n");
+                fprintf(out, "    sw $t0, 0($sp)\n");
+            }
+            
+            free(argArray);
         }
         
         // Call the function
@@ -188,16 +242,13 @@ void genExprMips(ASTNode* node, FILE* out) {
             fprintf(out, "    addi $sp, $sp, %d\n", argCount * 4);
         }
         
-        // Restore $ra
-        fprintf(out, "    lw $ra, 0($sp)\n");
-        fprintf(out, "    addi $sp, $sp, 4\n");
-        
         // Result is in $v0, move to $t0
         fprintf(out, "    move $t0, $v0\n");
     }
     else if (strcmp(node->type, "binop") == 0) {
-        fprintf(out, "    sw $s0, -4($sp)\n");
-        fprintf(out, "    addiu $sp, $sp, -4\n");
+        // Save $s0 on stack
+        fprintf(out, "    addi $sp, $sp, -4\n");
+        fprintf(out, "    sw $s0, 0($sp)\n");
 
         genExprMips(node->left, out);
         fprintf(out, "    move $s0, $t0\n");
@@ -210,8 +261,9 @@ void genExprMips(ASTNode* node, FILE* out) {
             case '%': fprintf(out, "    div $s0, $t0\n    mfhi $t0\n"); break;
         }
 
-        fprintf(out, "    addiu $sp, $sp, 4\n");
-        fprintf(out, "    lw $s0, -4($sp)\n");
+        // Restore $s0
+        fprintf(out, "    lw $s0, 0($sp)\n");
+        fprintf(out, "    addi $sp, $sp, 4\n");
     }
 }
 
@@ -339,15 +391,23 @@ void genStmtMips(ASTNode* node, FILE* out) {
     while (p) {
         if (strcmp(p->type, "assign") == 0) {
             genExprMips(p->left, out);
-            Symbol* sym = lookupSymbol(p->name);
-            if (!sym) {
-                fprintf(stderr, "Error: undeclared variable '%s'\n", p->name);
-                return;
+            // Check if it's a local variable first
+            int found = 0;
+            int offset = getLocalVarOffset(p->name, &found);
+            if (found && currentFunctionName) {
+                fprintf(out, "    sw $t0, %d($fp)\n", offset);
+            } else {
+                // Global variable
+                Symbol* sym = lookupSymbol(p->name);
+                if (!sym) {
+                    fprintf(stderr, "Error: undeclared variable '%s'\n", p->name);
+                    return;
+                }
+                if (sym->type == 'c')
+                    fprintf(out, "    sb $t0, var_%s\n", sym->name);
+                else
+                    fprintf(out, "    sw $t0, var_%s\n", sym->name);
             }
-            if (sym->type == 'c')
-                fprintf(out, "    sb $t0, var_%s\n", sym->name);
-            else
-                fprintf(out, "    sw $t0, var_%s\n", sym->name);
         }
         else if (strcmp(p->type, "string_decl") == 0) {
             // Strings initialized in data section
@@ -645,6 +705,9 @@ void genStmtMips(ASTNode* node, FILE* out) {
             }
         }
         else if (strcmp(p->type, "function_decl") == 0) {
+            // Clear any previous local variables
+            clearLocalVars();
+            
             // Generate function label
             fprintf(out, "\n# Function: %s\n", p->name);
             fprintf(out, "func_%s:\n", p->name);
@@ -652,38 +715,100 @@ void genStmtMips(ASTNode* node, FILE* out) {
             // Set current function name for return statements
             currentFunctionName = p->name;
             
-            // Function prologue - save frame pointer and return address
-            fprintf(out, "    # Function prologue\n");
-            fprintf(out, "    addi $sp, $sp, -8\n");
-            fprintf(out, "    sw $fp, 4($sp)\n");
-            fprintf(out, "    sw $ra, 0($sp)\n");
-            fprintf(out, "    move $fp, $sp\n");
-            
-            // Load parameters from stack into local variables
-            // Parameters are at $fp + 8 onwards (after saved $ra and $fp)
-            int paramOffset = 8;
+            // Count parameters
+            int paramCount = 0;
             ASTNode* param = p->params;
             while (param) {
-                fprintf(out, "    lw $t0, %d($fp)\n", paramOffset);
-                fprintf(out, "    sw $t0, var_%s\n", param->name);
+                paramCount++;
+                param = param->next;
+            }
+            
+            // Count local variables
+            int localCount = 0;
+            for (int i = 0; i < HASH_SIZE; i++) {
+                Symbol* s = symtab.buckets[i];
+                while (s) {
+                    if (s->scope && strcmp(s->scope, p->name) == 0) {
+                        localCount++;
+                    }
+                    s = s->next;
+                }
+            }
+            
+            // Stack frame layout (growing downward):
+            // [caller's frame]
+            // [arg N-1]         <- $fp + 8 + (N-1)*4 = $fp + 8 + 8 = $fp + 16 for N=3, arg 2
+            // [arg 1]           <- $fp + 8 + 4 = $fp + 12
+            // [arg 0]           <- $fp + 8 (first argument)
+            // [return address]  <- $fp + 4 (saved by callee)
+            // [saved $fp]       <- $fp (saved by callee, $fp points here)
+            // [local 0]         <- $fp - 4
+            // [local 1]         <- $fp - 8
+            // ... more locals
+            
+            int localSpace = localCount * 4;
+            
+            // Function prologue
+            fprintf(out, "    # Function prologue\n");
+            fprintf(out, "    addi $sp, $sp, -4\n");
+            fprintf(out, "    sw $ra, 0($sp)\n");    // Save return address
+            fprintf(out, "    addi $sp, $sp, -4\n");
+            fprintf(out, "    sw $fp, 0($sp)\n");    // Save frame pointer
+            fprintf(out, "    move $fp, $sp\n");      // Set new frame pointer
+            
+            // Allocate space for local variables
+            if (localSpace > 0) {
+                fprintf(out, "    addi $sp, $sp, -%d\n", localSpace);
+            }
+            
+            // Map parameters - they are ABOVE $fp at offsets $fp+8, $fp+12, etc.
+            param = p->params;
+            int paramOffset = 8;  // First param at $fp + 8 (above saved $fp and $ra)
+            while (param) {
+                fprintf(out, "    # Parameter: %s at $fp + %d\n", param->name, paramOffset);
+                addLocalVar(param->name, paramOffset);
                 paramOffset += 4;
                 param = param->next;
+            }
+            
+            // Map local variables - they are BELOW $fp at negative offsets
+            int localOffset = -4;  // Start at $fp - 4 (first local below saved $fp)
+            for (int i = 0; i < HASH_SIZE; i++) {
+                Symbol* s = symtab.buckets[i];
+                while (s) {
+                    if (s->scope && strcmp(s->scope, p->name) == 0) {
+                        // Check if not already added (i.e., not a parameter)
+                        int found = 0;
+                        getLocalVarOffset(s->name, &found);
+                        if (!found) {
+                            fprintf(out, "    # Local variable: %s at $fp - %d\n", s->name, -localOffset);
+                            addLocalVar(s->name, localOffset);
+                            // Initialize to 0
+                            fprintf(out, "    li $t0, 0\n");
+                            fprintf(out, "    sw $t0, %d($fp)\n", localOffset);
+                            localOffset -= 4;
+                        }
+                    }
+                    s = s->next;
+                }
             }
             
             // Generate function body
             genStmtMips(p->body, out);
             
-            // Function epilogue (in case no explicit return)
-            fprintf(out, "    # Function epilogue\n");
+            // Function epilogue (default return with 0 if no explicit return)
+            fprintf(out, "    # Function epilogue (default return)\n");
             fprintf(out, "func_%s_exit:\n", p->name);
-            fprintf(out, "    move $sp, $fp\n");
-            fprintf(out, "    lw $ra, 0($sp)\n");
-            fprintf(out, "    lw $fp, 4($sp)\n");
-            fprintf(out, "    addi $sp, $sp, 8\n");
-            fprintf(out, "    jr $ra\n");
+            fprintf(out, "    move $sp, $fp\n");      // Restore stack pointer
+            fprintf(out, "    lw $fp, 0($sp)\n");     // Restore frame pointer
+            fprintf(out, "    addi $sp, $sp, 4\n");
+            fprintf(out, "    lw $ra, 0($sp)\n");     // Restore return address
+            fprintf(out, "    addi $sp, $sp, 4\n");
+            fprintf(out, "    jr $ra\n");             // Return
             
-            // Reset current function name
+            // Reset current function name and clear locals
             currentFunctionName = NULL;
+            clearLocalVars();
         }
         else if (strcmp(p->type, "function_call") == 0) {
             // Function call as statement (not expression)
@@ -694,10 +819,25 @@ void genStmtMips(ASTNode* node, FILE* out) {
                 // Return with value
                 genExprMips(p->left, out);
                 fprintf(out, "    move $v0, $t0\n");
+            } else {
+                // Return with default value 0
+                fprintf(out, "    li $v0, 0\n");
             }
-            // Jump to function exit using current function name
+            // Jump to function exit
             if (currentFunctionName) {
                 fprintf(out, "    j func_%s_exit\n", currentFunctionName);
+            }
+        }
+        else if (strcmp(p->type, "decl") == 0) {
+            // Local variable declaration inside function
+            if (currentFunctionName) {
+                int found = 0;
+                getLocalVarOffset(p->name, &found);
+                if (!found) {
+                    // This should have been handled in function_decl prologue
+                    // but if we encounter a declaration that wasn't in symbol table...
+                    fprintf(out, "    # Warning: late local variable declaration: %s\n", p->name);
+                }
             }
         }
         p = p->next;

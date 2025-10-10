@@ -13,7 +13,7 @@ write(apple);
 
 char c = 'A';
 string msg = "Hello World";
-write("Testing character 'A':");
+write("Testing character 'A':" );
 write(c);
 write("Testing string message:");
 write(msg);
@@ -450,8 +450,8 @@ isReady = true;
 isActive = false;
 
 /* Use boolean in expressions */
-int result = isReady + isActive;
-write(result);
+int resul = isReady + isActive;
+write(resul);
 
 /* Loop with boolean */
 bool done = false;
@@ -463,3 +463,108 @@ while (done == false) {
     }
 }
 write(count);
+
+/* Comprehensive Recursive Functions Test */
+
+/* Classic factorial - recursive */
+function int factorial(int n) {
+    if (n <= 1) {
+        return 1;
+    }
+    int prev;
+    prev = n - 1;
+    int prevFact;
+    prevFact = factorial(prev);
+    return n * prevFact;
+}
+
+/* Fibonacci sequence - recursive */
+function int fibonacci(int n) {
+    if (n <= 1) {
+        return n;
+    }
+    int fib1;
+    int fib2;
+    int n1;
+    int n2;
+    n1 = n - 1;
+    n2 = n - 2;
+    fib1 = fibonacci(n1);
+    fib2 = fibonacci(n2);
+    return fib1 + fib2;
+}
+
+/* Sum of numbers from 1 to n - recursive */
+function int sumToN(int n) {
+    if (n <= 0) {
+        return 0;
+    }
+    int prev;
+    prev = n - 1;
+    int prevSum;
+    prevSum = sumToN(prev);
+    return n + prevSum;
+}
+
+/* Power function x^n - recursive */
+function int power(int x, int n) {
+    if (n == 0) {
+        return 1;
+    }
+    int n1;
+    n1 = n - 1;
+    int prevPower;
+    prevPower = power(x, n1);
+    return x * prevPower;
+}
+
+/* Greatest Common Divisor (GCD) - Euclidean algorithm */
+function int gcd(int a, int b) {
+    if (b == 0) {
+        return a;
+    }
+    int remainder;
+    remainder = a % b;
+    return gcd(b, remainder);
+}
+
+/* Countdown - simple recursive function */
+function int countdown(int n) {
+    if (n <= 0) {
+        write(0);
+        return 0;
+    }
+    write(n);
+    int next;
+    next = n - 1;
+    return countdown(next);
+}
+
+/* Main program */
+int resut;
+
+write(999);
+
+/* Test factorial */
+resut = factorial(5);
+write(resut);
+
+/* Test fibonacci */
+resut = fibonacci(7);
+write(resut);
+
+/* Test sumToN */
+resut = sumToN(10);
+write(resut);
+/* Test power */
+resut = power(2, 5);
+write(resut);
+
+/* Test GCD */
+resut = gcd(48, 18);
+write(resut);
+/* Test countdown */
+write(888);
+resut = countdown(5);
+
+write(777);

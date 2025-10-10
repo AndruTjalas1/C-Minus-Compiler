@@ -28,6 +28,7 @@ typedef struct Symbol {
     int* initValues;
     int initCount;
     char* stringValue;
+    char* scope;  // Function scope (NULL for global variables)
     struct Symbol* next;  // For hash chaining
 } Symbol;
 

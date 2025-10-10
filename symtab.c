@@ -39,6 +39,7 @@ static Symbol* createSymbol(char* name) {
     sym->initValues = NULL;
     sym->initCount = 0;
     sym->stringValue = NULL;
+    sym->scope = symtab.currentFunction ? symtab.currentFunction->name : NULL;
     sym->next = NULL;
     return sym;
 }

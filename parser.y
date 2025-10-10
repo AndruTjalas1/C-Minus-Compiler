@@ -465,21 +465,13 @@ function_def:
               exit(1);
           }
           
-          // Add parameters as local variables before parsing function body
-          ASTNode* param = $5;
-          while (param) {
-              char varType;
-              if (strcmp(param->returnType, "char") == 0) varType = 'c';
-              else if (strcmp(param->returnType, "string") == 0) varType = 's';
-              else if (strcmp(param->returnType, "bool") == 0) varType = 'b';
-              else varType = 'i';
-              addVar(param->name, 1, 0, varType);
-              param = param->next;
-          }
+          // Enter function scope - this will add parameters to symbol table
+          enterFunctionScope($3);
         }
       LBRACE stmt_list RBRACE
         {
           $$ = createFunctionDecl($2, $3, $5, $9);
+          exitFunctionScope();
           // printf("Function declaration: %s\n", $3);
         }
     | FUNCTION TYPE IDENTIFIER LPAREN RPAREN 
@@ -489,10 +481,14 @@ function_def:
               fprintf(stderr, "Failed to add function '%s'\n", $3);
               exit(1);
           }
+          
+          // Enter function scope
+          enterFunctionScope($3);
         }
       LBRACE stmt_list RBRACE
         {
           $$ = createFunctionDecl($2, $3, NULL, $8);
+          exitFunctionScope();
           // printf("Function declaration: %s (no params)\n", $3);
         }
     ;
