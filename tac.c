@@ -143,6 +143,11 @@ TAC* genExprTac(ASTNode* node, char** place) {
         *place = newTemp();
         return makeTAC(TAC_NUM, *place, buf, NULL);
     }
+    else if (strcmp(node->type, "string_literal") == 0) {
+        // For string literals, use the string itself as the place
+        *place = strdup(node->name);
+        return NULL;
+    }
     else if (strcmp(node->type, "var") == 0) {
         *place = strdup(node->name);
         return NULL;
@@ -243,6 +248,15 @@ TAC* genStmtTac(ASTNode* node) {
     }
     else if (strcmp(node->type, "decl") == 0) {
         return makeTAC(TAC_VAR, node->name, NULL, NULL);
+    }
+    else if (strcmp(node->type, "string_decl") == 0) {
+        // Handle string declaration with initialization
+        // string msg = "Hello World"
+        char* valuePlace;
+        TAC* valueCode = genExprTac(node->left, &valuePlace);
+        TAC* declCode = makeTAC(TAC_VAR, node->name, NULL, NULL);
+        TAC* assignCode = makeTAC(TAC_ASSIGN, node->name, valuePlace, NULL);
+        return concat(concat(declCode, valueCode), assignCode);
     }
     else if (strcmp(node->type, "array_decl") == 0) {
         char buf[16];
@@ -593,6 +607,19 @@ TAC* algebraicSimplification(TAC* code) {
     return code;
 }
 
+/* Helper function to check if a string looks like a string literal (has spaces or special chars) */
+int isStringLiteral(const char* str) {
+    if (!str) return 0;
+    // Check if it contains spaces or looks like a sentence
+    while (*str) {
+        if (*str == ' ' || *str == ',' || *str == '!' || *str == '?') {
+            return 1;
+        }
+        str++;
+    }
+    return 0;
+}
+
 /* Copy propagation optimization */
 TAC* copyPropagation(TAC* code) {
     TAC* cur = code;
@@ -603,6 +630,12 @@ TAC* copyPropagation(TAC* code) {
         if (cur->op == TAC_ASSIGN && cur->arg1 && !isConstant(cur->arg1)) {
             char* target = cur->res;
             char* source = cur->arg1;
+            
+            // Don't propagate string literals - keep them as variable references
+            if (isStringLiteral(source)) {
+                cur = cur->next;
+                continue;
+            }
             
             // Look ahead and replace uses of target with source
             TAC* next = cur->next;

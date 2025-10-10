@@ -68,6 +68,14 @@ Symbol* lookupSymbol(const char* name) {
 void collectStringLiterals(ASTNode* node, FILE* out) {
     if (!node) return;
     
+    // Skip string_decl nodes - their string literals are stored in the symbol table
+    if (strcmp(node->type, "string_decl") == 0) {
+        // Don't traverse the left child (string_literal) of string_decl
+        // But do traverse next siblings
+        if (node->next) collectStringLiterals(node->next, out);
+        return;
+    }
+    
     if (strcmp(node->type, "string_literal") == 0) {
         fprintf(out, "str_lit_%d: .asciiz \"%s\"\n", stringLiteralCounter, node->name);
         stringLiteralCounter++;
