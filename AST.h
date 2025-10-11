@@ -22,6 +22,11 @@ typedef struct ASTNode {
     struct ASTNode* params;
     struct ASTNode* body;
     struct ASTNode* args;
+    // Switch-case fields
+    struct ASTNode* switchExpr;
+    struct ASTNode* cases;
+    struct ASTNode* caseValue;
+    struct ASTNode* caseBody;
 } ASTNode;
 
 // Memory pool functions
@@ -57,6 +62,12 @@ ASTNode* createElseIfList(ASTNode* list, ASTNode* condition, ASTNode* block);
 ASTNode* createFor(ASTNode* init, ASTNode* condition, ASTNode* update, ASTNode* body);
 ASTNode* createWhile(ASTNode* condition, ASTNode* body);
 ASTNode* createDoWhile(ASTNode* condition, ASTNode* body);
+ASTNode* createSwitch(ASTNode* expr, ASTNode* cases);
+ASTNode* createCase(ASTNode* value, ASTNode* body);
+ASTNode* createDefaultCase(ASTNode* body);
+ASTNode* createCaseList(ASTNode* list, ASTNode* caseNode);
+ASTNode* createBreak();
+ASTNode* createContinue();
 
 // Function-related node creation
 ASTNode* createFunctionDecl(char* returnType, char* name, ASTNode* params, ASTNode* body);

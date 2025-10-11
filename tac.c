@@ -424,6 +424,14 @@ TAC* genStmtTac(ASTNode* node) {
             return makeTAC(TAC_RETURN, NULL, NULL, NULL);
         }
     }
+    else if (strcmp(node->type, "break") == 0) {
+        // Break in TAC is just represented as a note - actual jump is in MIPS
+        return makeTAC(TAC_BREAK, NULL, NULL, NULL);
+    }
+    else if (strcmp(node->type, "continue") == 0) {
+        // Continue in TAC is just represented as a note - actual jump is in MIPS
+        return makeTAC(TAC_CONTINUE, NULL, NULL, NULL);
+    }
 
     return NULL;
 }
@@ -816,6 +824,8 @@ void generateTAC(ASTNode* root, const char* filename) {
                 case TAC_CALL: fprintf(unoptFile, "%s = call %s\n", cur->res, cur->arg1); break;
                 case TAC_RETURN: fprintf(unoptFile, "return %s\n", cur->res ? cur->res : ""); break;
                 case TAC_ARG: fprintf(unoptFile, "arg %s\n", cur->res); break;
+                case TAC_BREAK: fprintf(unoptFile, "break\n"); break;
+                case TAC_CONTINUE: fprintf(unoptFile, "continue\n"); break;
             }
             cur = cur->next;
         }
@@ -930,6 +940,12 @@ void generateTAC(ASTNode* root, const char* filename) {
                 break;
             case TAC_ARG:
                 fprintf(out, "arg %s\n", cur->res);
+                break;
+            case TAC_BREAK:
+                fprintf(out, "break\n");
+                break;
+            case TAC_CONTINUE:
+                fprintf(out, "continue\n");
                 break;
         }
         cur = cur->next;

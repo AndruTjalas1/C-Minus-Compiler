@@ -35,7 +35,9 @@ typedef enum {
     TAC_PARAM,             // Function parameter
     TAC_CALL,              // Function call
     TAC_RETURN,            // Return statement
-    TAC_ARG                // Function call argument
+    TAC_ARG,               // Function call argument
+    TAC_BREAK,             // Break statement
+    TAC_CONTINUE           // Continue statement
 } TACOp;
 
 /* TAC instruction representation */

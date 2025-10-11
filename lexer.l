@@ -65,6 +65,11 @@ STRING \"[^\"]*\"
 "do"        { return DO; }
 "function"  { return FUNCTION; }
 "return"    { return RETURN; }
+"switch"    { return SWITCH; }
+"case"      { return CASE; }
+"default"   { return DEFAULT; }
+"break"     { return BREAK; }
+"continue"  { return CONTINUE; }
 "void"      { 
     yylval.str = strdup("void"); 
     return TYPE; 
@@ -121,6 +126,7 @@ STRING \"[^\"]*\"
 "/"         { return DIVIDE; }
 "("         { return LPAREN; }
 ")"         { return RPAREN; }
+":"         { return COLON; }
 
 \r?\n       { }
 [ \t]       { }

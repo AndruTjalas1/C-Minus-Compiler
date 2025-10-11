@@ -32,10 +32,11 @@ int* extractInitValues(ASTNode* initList, int* count);
 %token SEMICOLON EQ PLUS MINUS MULTIPLY DIVIDE MODULO
 %token PLUSEQ MINUSEQ MULTEQ DIVEQ MODEQ
 %token PLUSPLUS MINUSMINUS
-%token LBRACKET RBRACKET LBRACE RBRACE COMMA KEYWORD
+%token LBRACKET RBRACKET LBRACE RBRACE COMMA KEYWORD COLON
 %token LPAREN RPAREN
 %token IF ELSEIF ELSE
 %token FOR WHILE DO
+%token SWITCH CASE DEFAULT BREAK CONTINUE
 %token FUNCTION RETURN
 %token EQEQ NEQ LT LE GT GE
 %token AND OR NOT XOR
@@ -46,6 +47,7 @@ int* extractInitValues(ASTNode* initList, int* count);
 %type <node> program stmt declaration assignment expression print_stmt
 %type <node> array_access init_list if_stmt condition stmt_block elseif_list stmt_list
 %type <node> for_stmt while_stmt do_while_stmt loop_init loop_update
+%type <node> switch_stmt case_list case_stmt
 %type <node> function_def param_list param function_call arg_list return_stmt
 
 %left OR
@@ -73,6 +75,9 @@ stmt:
     | for_stmt
     | while_stmt
     | do_while_stmt
+    | switch_stmt
+    | BREAK SEMICOLON { $$ = createBreak(); }
+    | CONTINUE SEMICOLON { $$ = createContinue(); }
     | function_call SEMICOLON { $$ = $1; }
     | return_stmt
     ;
@@ -453,6 +458,30 @@ do_while_stmt:
         {
           $$ = createDoWhile($5, $2);
           // printf("Do-while loop created\n");
+        }
+    ;
+
+switch_stmt:
+      SWITCH LPAREN expression RPAREN LBRACE case_list RBRACE
+        {
+          $$ = createSwitch($3, $6);
+          // printf("Switch statement created\n");
+        }
+    ;
+
+case_list:
+      case_stmt { $$ = $1; }
+    | case_list case_stmt { $$ = createCaseList($1, $2); }
+    ;
+
+case_stmt:
+      CASE expression COLON stmt_list
+        {
+          $$ = createCase($2, $4);
+        }
+    | DEFAULT COLON stmt_list
+        {
+          $$ = createDefaultCase($3);
         }
     ;
 

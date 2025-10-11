@@ -18,6 +18,41 @@ static int currentStringLiteralIndex = 0;
 /* Current function name for return statements */
 static const char* currentFunctionName = NULL;
 
+/* Context stack for break/continue */
+typedef struct LoopContext {
+    char* breakLabel;
+    char* continueLabel;
+    struct LoopContext* next;
+} LoopContext;
+
+static LoopContext* loopContextStack = NULL;
+
+void pushLoopContext(const char* breakLabel, const char* continueLabel) {
+    LoopContext* ctx = malloc(sizeof(LoopContext));
+    ctx->breakLabel = strdup(breakLabel);
+    ctx->continueLabel = continueLabel ? strdup(continueLabel) : NULL;
+    ctx->next = loopContextStack;
+    loopContextStack = ctx;
+}
+
+void popLoopContext() {
+    if (loopContextStack) {
+        LoopContext* old = loopContextStack;
+        loopContextStack = loopContextStack->next;
+        free(old->breakLabel);
+        if (old->continueLabel) free(old->continueLabel);
+        free(old);
+    }
+}
+
+const char* getCurrentBreakLabel() {
+    return loopContextStack ? loopContextStack->breakLabel : NULL;
+}
+
+const char* getCurrentContinueLabel() {
+    return loopContextStack ? loopContextStack->continueLabel : NULL;
+}
+
 /* Track local variables for current function */
 typedef struct LocalVar {
     char* name;
@@ -627,6 +662,9 @@ void genStmtMips(ASTNode* node, FILE* out) {
             sprintf(endLabel, "for_end_%d", forCounter);
             forCounter++;
             
+            // Push loop context for break/continue
+            pushLoopContext(endLabel, updateLabel);
+            
             // Generate initialization code
             if (p->loopInit) {
                 genStmtMips(p->loopInit, out);
@@ -652,6 +690,9 @@ void genStmtMips(ASTNode* node, FILE* out) {
             
             // End label
             fprintf(out, "%s:\n", endLabel);
+            
+            // Pop loop context
+            popLoopContext();
         }
         else if (strcmp(p->type, "while") == 0) {
             // Generate unique labels for the while loop
@@ -660,6 +701,9 @@ void genStmtMips(ASTNode* node, FILE* out) {
             sprintf(condLabel, "while_cond_%d", whileCounter);
             sprintf(endLabel, "while_end_%d", whileCounter);
             whileCounter++;
+            
+            // Push loop context for break/continue
+            pushLoopContext(endLabel, condLabel);
             
             // Condition label and check
             fprintf(out, "%s:\n", condLabel);
@@ -675,14 +719,21 @@ void genStmtMips(ASTNode* node, FILE* out) {
             
             // End label
             fprintf(out, "%s:\n", endLabel);
+            
+            // Pop loop context
+            popLoopContext();
         }
         else if (strcmp(p->type, "do_while") == 0) {
             // Generate unique labels for the do-while loop
             static int doWhileCounter = 0;
-            char startLabel[32], condLabel[32];
+            char startLabel[32], condLabel[32], endLabel[32];
             sprintf(startLabel, "do_start_%d", doWhileCounter);
             sprintf(condLabel, "do_cond_%d", doWhileCounter);
+            sprintf(endLabel, "do_end_%d", doWhileCounter);
             doWhileCounter++;
+            
+            // Push loop context for break/continue
+            pushLoopContext(endLabel, condLabel);
             
             // Start label - body executes at least once
             fprintf(out, "%s:\n", startLabel);
@@ -695,9 +746,6 @@ void genStmtMips(ASTNode* node, FILE* out) {
             if (p->condition) {
                 // For do-while, we want to jump back to start if condition is TRUE
                 // So we need to invert the jump logic by creating a temp label
-                static int doEndCounter = 0;
-                char endLabel[32];
-                sprintf(endLabel, "do_end_%d", doEndCounter++);
                 
                 // Evaluate condition and jump to end if FALSE
                 genConditionMips(p->condition, out, endLabel);
@@ -710,6 +758,101 @@ void genStmtMips(ASTNode* node, FILE* out) {
             } else {
                 // No condition means infinite loop
                 fprintf(out, "    j %s\n", startLabel);
+            }
+            
+            // Pop loop context
+            popLoopContext();
+        }
+        else if (strcmp(p->type, "switch") == 0) {
+            // Generate unique labels for switch
+            static int switchCounter = 0;
+            char endLabel[32];
+            sprintf(endLabel, "switch_end_%d", switchCounter);
+            switchCounter++;
+            
+            // Push switch context for break (no continue in switch)
+            pushLoopContext(endLabel, NULL);
+            
+            // Evaluate switch expression
+            genExprMips(p->switchExpr, out);
+            fprintf(out, "    move $s7, $t0  # Save switch expression\n");
+            
+            // Generate code for each case
+            ASTNode* caseNode = p->cases;
+            ASTNode* defaultCase = NULL;
+            char defaultLabel[32];
+            int caseNum = 0;
+            
+            // First pass: generate comparisons and jumps
+            while (caseNode) {
+                if (strcmp(caseNode->type, "case") == 0) {
+                    char caseLabel[32];
+                    sprintf(caseLabel, "case_%d_%d", switchCounter-1, caseNum);
+                    
+                    // Evaluate case value
+                    genExprMips(caseNode->caseValue, out);
+                    
+                    // Compare with switch expression
+                    fprintf(out, "    beq $s7, $t0, %s\n", caseLabel);
+                    
+                    caseNum++;
+                } else if (strcmp(caseNode->type, "default") == 0) {
+                    defaultCase = caseNode;
+                    sprintf(defaultLabel, "default_%d", switchCounter-1);
+                }
+                caseNode = caseNode->next;
+            }
+            
+            // If no case matched, jump to default or end
+            if (defaultCase) {
+                fprintf(out, "    j %s\n", defaultLabel);
+            } else {
+                fprintf(out, "    j %s\n", endLabel);
+            }
+            
+            // Second pass: generate case bodies
+            caseNode = p->cases;
+            caseNum = 0;
+            while (caseNode) {
+                if (strcmp(caseNode->type, "case") == 0) {
+                    char caseLabel[32];
+                    sprintf(caseLabel, "case_%d_%d", switchCounter-1, caseNum);
+                    
+                    fprintf(out, "%s:\n", caseLabel);
+                    genStmtMips(caseNode->caseBody, out);
+                    // Note: no automatic break, falls through to next case
+                    
+                    caseNum++;
+                }
+                caseNode = caseNode->next;
+            }
+            
+            // Generate default case if present
+            if (defaultCase) {
+                fprintf(out, "%s:\n", defaultLabel);
+                genStmtMips(defaultCase->caseBody, out);
+            }
+            
+            // End label
+            fprintf(out, "%s:\n", endLabel);
+            
+            // Pop switch context
+            popLoopContext();
+        }
+        else if (strcmp(p->type, "break") == 0) {
+            const char* breakLabel = getCurrentBreakLabel();
+            if (breakLabel) {
+                fprintf(out, "    j %s  # break\n", breakLabel);
+            } else {
+                fprintf(stderr, "Error: break statement outside of loop or switch\n");
+            }
+        }
+        else if (strcmp(p->type, "continue") == 0) {
+            const char* continueLabel = getCurrentContinueLabel();
+            if (continueLabel) {
+                fprintf(out, "    j %s  # continue\n", continueLabel);
+            } else {
+                fprintf(stderr, "Error: continue statement outside of loop\n");
             }
         }
         else if (strcmp(p->type, "function_decl") == 0) {

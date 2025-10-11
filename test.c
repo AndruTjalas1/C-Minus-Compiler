@@ -568,3 +568,104 @@ write(888);
 resut = countdown(5);
 
 write(777);
+
+/*Simple function that adds two numbers*/
+function int add(int a, int b) {
+    int result;
+    result = a + b;
+    return result;
+}
+
+/* Function that multiplies two numbers */
+function int multiply(int x, int y) {
+    return x * y;
+}
+
+/* Function with no parameters */
+function int getConstant() {
+    return 42;
+}
+
+/* Main program */
+int constant;
+
+a = 5;
+b = 3;
+
+sum = add(a, b);
+write(sum);
+
+product = multiply(a, b);
+write(product);
+
+constant = getConstant();
+write(constant);
+
+/* Test file for switch-case and break/continue statements */
+
+int main;
+int choice;
+int counter;
+int i;
+
+choice = 2;
+
+/* Switch statement with multiple cases */
+switch (choice) {
+    case 1:
+        write(100);
+        break;
+    case 2:
+        write(200);
+        break;
+    case 3:
+        write(300);
+        break;
+    default:
+        write(999);
+}
+
+/* For loop with break */
+for (i = 0; i < 10; i++) {
+    write(i);
+    if (i == 5) {
+        break;
+    }
+}
+
+/* While loop with continue */
+counter = 0;
+while (counter < 9) {
+    counter++;
+    if (counter == 3) {
+        continue;
+    }
+    write(counter);
+}
+
+/* Switch with fall-through (no break) */
+choice = 1;
+switch (choice) {
+    case 1:
+        write(10);
+    case 2:
+        write(20);
+        break;
+    default:
+        write(30);
+}
+
+/* Nested loops with break and continue */
+for (i = 0; i < 5; i++) {
+    counter = 0;
+    while (counter < 5) {
+        counter++;
+        if (counter == 2) {
+            continue;
+        }
+        if (counter == 4) {
+            break;
+        }
+        write(counter);
+    }
+}

@@ -315,6 +315,44 @@ ASTNode* createDoWhile(ASTNode* condition, ASTNode* body) {
     return node;
 }
 
+ASTNode* createSwitch(ASTNode* expr, ASTNode* cases) {
+    ASTNode* node = newNode("switch");
+    node->switchExpr = expr;
+    node->cases = cases;
+    return node;
+}
+
+ASTNode* createCase(ASTNode* value, ASTNode* body) {
+    ASTNode* node = newNode("case");
+    node->caseValue = value;
+    node->caseBody = body;
+    return node;
+}
+
+ASTNode* createDefaultCase(ASTNode* body) {
+    ASTNode* node = newNode("default");
+    node->caseBody = body;
+    return node;
+}
+
+ASTNode* createCaseList(ASTNode* list, ASTNode* caseNode) {
+    if (!list) return caseNode;
+    ASTNode* p = list;
+    while (p->next) p = p->next;
+    p->next = caseNode;
+    return list;
+}
+
+ASTNode* createBreak() {
+    ASTNode* node = newNode("break");
+    return node;
+}
+
+ASTNode* createContinue() {
+    ASTNode* node = newNode("continue");
+    return node;
+}
+
 /* ========== FUNCTION-RELATED NODE CREATION ========== */
 
 ASTNode* createFunctionDecl(char* returnType, char* name, ASTNode* params, ASTNode* body) {
