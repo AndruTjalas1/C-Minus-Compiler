@@ -13,7 +13,6 @@ void collectStringLiterals(ASTNode* node, FILE* out);
 
 /* String literal counter for generating unique labels */
 static int stringLiteralCounter = 0;
-static int currentStringLiteralIndex = 0;
 
 /* Current function name for return statements */
 static const char* currentFunctionName = NULL;
@@ -113,6 +112,8 @@ void collectStringLiterals(ASTNode* node, FILE* out) {
     
     if (strcmp(node->type, "string_literal") == 0) {
         fprintf(out, "str_lit_%d: .asciiz \"%s\"\n", stringLiteralCounter, node->name);
+        // Store the index in the node for later use during code generation
+        node->value = stringLiteralCounter;
         stringLiteralCounter++;
     }
     
@@ -171,7 +172,8 @@ void genExprMips(ASTNode* node, FILE* out) {
         fprintf(out, "    li $t0, %d\n", node->value);  // 0 for false, 1 for true
     }
     else if (strcmp(node->type, "string_literal") == 0) {
-        fprintf(out, "    la $t0, str_lit_%d\n", currentStringLiteralIndex++);
+        // Use the index stored during collection phase
+        fprintf(out, "    la $t0, str_lit_%d\n", node->value);
     } 
     else if (strcmp(node->type, "var") == 0) {
         // Check if it's a local variable first
@@ -1005,7 +1007,6 @@ void generateMIPS(ASTNode* root, const char* filename) {
 
     // Reset counters for new compilation
     stringLiteralCounter = 0;
-    currentStringLiteralIndex = 0;
 
     fprintf(out, ".data\n");
     
@@ -1066,7 +1067,7 @@ void generateMIPS(ASTNode* root, const char* filename) {
     p = root;
     while (p) {
         if (strcmp(p->type, "function_decl") != 0) {
-            // Create a temporary node list for just this statement
+            // Create a temporary node for just this statement to ensure order is preserved
             ASTNode temp = *p;
             temp.next = NULL;
             genStmtMips(&temp, out);
