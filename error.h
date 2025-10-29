@@ -23,6 +23,7 @@ void reportError(int line, const char* source, ErrorType type, const char* messa
 void errorUndeclaredVariable(int line, const char* varName);
 void errorRedeclaredVariable(int line, const char* varName);
 void errorTypeMismatch(int line, const char* source, const char* expected, const char* actual);
+void errorFunctionArgTypeMismatch(int line, const char* funcName, int paramNum, const char* expected, const char* actual);
 void errorMissingSemicolon(int line, const char* source);
 void errorMissingParen(int line, const char* source, const char* parenType);
 void errorMissingBrace(int line, const char* source);

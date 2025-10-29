@@ -128,6 +128,8 @@ void collectStringLiterals(ASTNode* node, FILE* out) {
     if (node->loopInit) collectStringLiterals(node->loopInit, out);
     if (node->loopUpdate) collectStringLiterals(node->loopUpdate, out);
     if (node->loopBody) collectStringLiterals(node->loopBody, out);
+    if (node->body) collectStringLiterals(node->body, out);  // For function bodies
+    if (node->args) collectStringLiterals(node->args, out);  // For function arguments
 }
 
 /* Helper to find string literal index */
@@ -191,6 +193,10 @@ void genExprMips(ASTNode* node, FILE* out) {
             // Check if it's a string variable
             if (sym->stringValue) {
                 fprintf(out, "    la $t0, var_%s\n", sym->name);  // load string address
+            }
+            else if (sym->type == 's') {
+                // String type variable - load the address stored at var_<name>
+                fprintf(out, "    lw $t0, var_%s\n", sym->name);  // Load the address stored there
             }
             else if (sym->type == 'c') {
                 fprintf(out, "    lb $t0, var_%s\n", sym->name);
@@ -448,10 +454,14 @@ void genStmtMips(ASTNode* node, FILE* out) {
                     fprintf(stderr, "Error: undeclared variable '%s'\n", p->name);
                     return;
                 }
-                if (sym->type == 'c')
-                    fprintf(out, "    sb $t0, var_%s\n", sym->name);
-                else
+                if (sym->type == 's') {
+                    // String type - $t0 contains the address, store it
                     fprintf(out, "    sw $t0, var_%s\n", sym->name);
+                } else if (sym->type == 'c') {
+                    fprintf(out, "    sb $t0, var_%s\n", sym->name);
+                } else {
+                    fprintf(out, "    sw $t0, var_%s\n", sym->name);
+                }
             }
         }
         else if (strcmp(p->type, "string_decl") == 0) {
@@ -570,6 +580,15 @@ void genStmtMips(ASTNode* node, FILE* out) {
                     p = p->next;
                     continue;
                 }
+                // Also handle string type variables (from function returns)
+                if (sym && sym->type == 's') {
+                    genExprMips(p->left, out);  // Get the string address into $t0
+                    fprintf(out, "    move $a0, $t0\n");  // Address is in $t0
+                    fprintf(out, "    li $v0, 4\n    syscall\n");  // Print string
+                    fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n");  // Print newline
+                    p = p->next;
+                    continue;
+                }
             }
             
             genExprMips(p->left, out);
@@ -578,6 +597,8 @@ void genStmtMips(ASTNode* node, FILE* out) {
                 Symbol* sym = lookupSymbol(p->left->name);
                 if (sym && sym->type == 'c') {
                     fprintf(out, "    move $a0, $t0\n    li $v0, 11\n    syscall\n");
+                } else if (sym && sym->type == 's') {
+                    fprintf(out, "    move $a0, $t0\n    li $v0, 4\n    syscall\n");  // Print as string
                 } else {
                     fprintf(out, "    move $a0, $t0\n    li $v0, 1\n    syscall\n");
                 }
@@ -1013,12 +1034,20 @@ void generateMIPS(ASTNode* root, const char* filename) {
     // Collect and generate string literals
     collectStringLiterals(root, out);
 
+    fprintf(out, ".align 2\n");  // Align before string and char variables
+    
     // Iterate through hash table buckets for string and char declarations
     for (int i = 0; i < HASH_SIZE; i++) {
         Symbol* s = symtab.buckets[i];
         while (s) {
-            if (s->stringValue) {
-                fprintf(out, "var_%s: .asciiz \"%s\"\n", s->name, s->stringValue);
+            if (s->type == 's') {
+                // String type (declared with or without initialization)
+                if (s->stringValue) {
+                    fprintf(out, "var_%s: .asciiz \"%s\"\n", s->name, s->stringValue);
+                } else {
+                    // Uninitialized string variable - allocate one word for storing the address
+                    fprintf(out, "var_%s: .word 0\n", s->name);
+                }
             }
             else if (s->type == 'c') {
                 if (s->dimensions == 0) {

@@ -83,3 +83,12 @@ void errorArrayBounds(int line, const char* arrayName, int index, int size) {
              "Array index %d is out of bounds (array size is %d)", index, size);
     reportError(line, source, ERROR_ARRAY_BOUNDS, message);
 }
+
+void errorFunctionArgTypeMismatch(int line, const char* funcName, int paramNum, const char* expected, const char* actual) {
+    char message[256];
+    char source[256];
+    snprintf(source, sizeof(source), "%s(param %d)", funcName, paramNum);
+    snprintf(message, sizeof(message), 
+             "Parameter %d expects type '%s' but got '%s'", paramNum, expected, actual);
+    reportError(line, source, ERROR_TYPE_MISMATCH, message);
+}

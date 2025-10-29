@@ -4,6 +4,9 @@
 #include "AST.h"
 #include "symtab.h"
 #include "stringpool.h"
+#include "error.h"
+
+extern int yylineno;
 
 SymbolTable symtab;
 
@@ -370,6 +373,70 @@ int validateFunctionCall(const char* name, struct ASTNode* args) {
         fprintf(stderr, "Error: Function '%s' expects %d arguments, got %d\n",
                 name, func->paramCount, argCount);
         return 0;
+    }
+    
+    // Check parameter types
+    arg = args;
+    for (int i = 0; i < func->paramCount && arg; i++) {
+        char expectedType;
+        if (strcmp(func->paramTypes[i], "int") == 0) expectedType = 'i';
+        else if (strcmp(func->paramTypes[i], "char") == 0) expectedType = 'c';
+        else if (strcmp(func->paramTypes[i], "bool") == 0) expectedType = 'b';
+        else if (strcmp(func->paramTypes[i], "string") == 0) expectedType = 's';
+        else expectedType = 'i';
+        
+        // Determine actual argument type
+        char actualType = '?';
+        if (arg->type && strcmp(arg->type, "num") == 0) {
+            actualType = 'i';
+        } else if (arg->type && strcmp(arg->type, "char") == 0) {
+            actualType = 'c';
+        } else if (arg->type && strcmp(arg->type, "bool") == 0) {
+            actualType = 'b';
+        } else if (arg->type && strcmp(arg->type, "string_literal") == 0) {
+            actualType = 's';
+        } else if (arg->type && strcmp(arg->type, "var") == 0) {
+            // Look up variable type
+            Symbol* sym = getSymbol(arg->name);
+            if (sym) {
+                actualType = sym->type;
+            }
+        } else if (arg->type && strcmp(arg->type, "binop") == 0) {
+            actualType = 'i';  // Binary operations result in int
+        } else if (arg->type && strcmp(arg->type, "function_call") == 0) {
+            // Look up function return type
+            FunctionSymbol* calledFunc = getFunction(arg->name);
+            if (calledFunc) {
+                if (strcmp(calledFunc->returnType, "int") == 0) actualType = 'i';
+                else if (strcmp(calledFunc->returnType, "char") == 0) actualType = 'c';
+                else if (strcmp(calledFunc->returnType, "bool") == 0) actualType = 'b';
+                else if (strcmp(calledFunc->returnType, "string") == 0) actualType = 's';
+            }
+        }
+        
+        // Check type match
+        if (actualType != '?' && expectedType != actualType) {
+            char* expectedName = "unknown";
+            char* actualName = "unknown";
+            
+            switch(expectedType) {
+                case 'i': expectedName = "int"; break;
+                case 's': expectedName = "string"; break;
+                case 'c': expectedName = "char"; break;
+                case 'b': expectedName = "bool"; break;
+            }
+            switch(actualType) {
+                case 'i': actualName = "int"; break;
+                case 's': actualName = "string"; break;
+                case 'c': actualName = "char"; break;
+                case 'b': actualName = "bool"; break;
+            }
+            
+            errorFunctionArgTypeMismatch(yylineno, name, i + 1, expectedName, actualName);
+            return 0;
+        }
+        
+        arg = arg->next;
     }
     
     return 1;
