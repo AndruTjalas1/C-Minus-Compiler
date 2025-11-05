@@ -532,6 +532,26 @@ param:
         {
           $$ = createParam($1, $2);
         }
+    | TYPE IDENTIFIER LBRACKET RBRACKET
+        {
+          $$ = createArrayParam($1, $2, 0, 0);
+        }
+    | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET
+        {
+          $$ = createArrayParam($1, $2, $4, 0);
+        }
+    | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET LBRACKET NUMBER RBRACKET
+        {
+          $$ = createArrayParam($1, $2, $4, $7);
+        }
+    | TYPE IDENTIFIER LBRACKET RBRACKET LBRACKET RBRACKET
+        {
+          $$ = createArrayParam($1, $2, 0, 0);
+        }
+    | TYPE IDENTIFIER LBRACKET NUMBER RBRACKET LBRACKET RBRACKET
+        {
+          $$ = createArrayParam($1, $2, $4, 0);
+        }
     ;
 
 function_call:

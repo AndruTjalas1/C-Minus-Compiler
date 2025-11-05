@@ -368,6 +368,17 @@ ASTNode* createParam(char* type, char* name) {
     ASTNode* node = newNode("param");
     node->returnType = intern_string(type);
     node->name = intern_string(name);
+    node->isArrayParam = 0;
+    return node;
+}
+
+ASTNode* createArrayParam(char* type, char* name, int dim1, int dim2) {
+    ASTNode* node = newNode("param");
+    node->returnType = intern_string(type);
+    node->name = intern_string(name);
+    node->isArrayParam = 1;
+    node->arrayDim1 = dim1;  // 0 means variable-length []
+    node->arrayDim2 = dim2;  // 0 means not applicable
     return node;
 }
 

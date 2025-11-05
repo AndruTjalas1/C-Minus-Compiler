@@ -852,3 +852,51 @@ if (x == 1) {
 }
 
 write("===== ALL TESTS COMPLETED =====");
+
+/* Test Variable-Length Array Parameters */
+
+/* Function that accepts arrays without predefined sizes */
+function int sumArray(int arr[]) {
+    int sum = 0;
+    int i = 0;
+    
+    while (i < 5) {
+        sum = sum + arr[i];
+        i++;
+    }
+    
+    return sum;
+}
+
+/* Function that prints array elements */
+function void printArray(int arr[]) {
+    int i = 0;
+    
+    while (i < 5) {
+        write(arr[i]);
+        i++;
+    }
+}
+
+/* Function with fixed-size array parameter */
+function int processFixed(int arr[10]) {
+    return arr[0] + arr[1];
+}
+
+/* Main program */
+int myArray[5] = {10, 20, 30, 40, 50};
+int result;
+
+write("Testing variable-length array parameters:");
+write("Array contents:");
+printArray(myArray);
+
+write("Sum of array elements:");
+result = sumArray(myArray);
+write(result);
+
+write("Testing fixed-size array parameter:");
+result = processFixed(myArray);
+write(result);
+
+write("Test completed successfully!");

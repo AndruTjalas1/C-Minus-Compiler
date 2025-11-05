@@ -43,6 +43,8 @@ static Symbol* createSymbol(char* name) {
     sym->initCount = 0;
     sym->stringValue = NULL;
     sym->scope = symtab.currentFunction ? symtab.currentFunction->name : NULL;
+    sym->isArrayParam = 0;
+    sym->arrayLength = -1;
     sym->next = NULL;
     return sym;
 }
@@ -80,6 +82,33 @@ int addVar(char* name, int size, int initial_value, char type) {
     } else {
         symtab.nextOffset += size * 4;
     }
+    
+    insertSymbol(sym);
+    return sym->offset;
+}
+
+int addArrayParam(char* name, int dim1, int dim2, char type, int arrayLength) {
+    if (isVarDeclared(name)) {
+        return -1;
+    }
+    if (symtab.count >= MAX_VARS) {
+        fprintf(stderr, "Error: symbol table overflow\n");
+        exit(1);
+    }
+
+    Symbol* sym = createSymbol(name);
+    sym->isArrayParam = 1;
+    sym->type = type;
+    sym->dimensions = (dim2 > 0) ? 2 : 1;
+    sym->dim1 = (dim1 > 0) ? dim1 : arrayLength;
+    sym->dim2 = dim2;
+    sym->size = sym->dim1 * (sym->dim2 > 0 ? sym->dim2 : 1);
+    sym->arrayLength = arrayLength;
+
+    // Array parameters are typically passed by reference (pointer),
+    // so they don't take much space in the current frame
+    // We allocate minimal space for the reference
+    symtab.nextOffset += 4;  // 4 bytes for a pointer
     
     insertSymbol(sym);
     return sym->offset;
@@ -317,18 +346,27 @@ int addFunction(char* name, char* returnType, struct ASTNode* params) {
     if (paramCount > 0) {
         func->paramTypes = malloc(paramCount * sizeof(char*));
         func->paramNames = malloc(paramCount * sizeof(char*));
+        func->isArrayParam = malloc(paramCount * sizeof(int));
+        func->arrayParamDim1 = malloc(paramCount * sizeof(int));
+        func->arrayParamDim2 = malloc(paramCount * sizeof(int));
         
         p = params;
         int i = 0;
         while (p) {
             func->paramTypes[i] = intern_string(p->returnType);
             func->paramNames[i] = intern_string(p->name);
+            func->isArrayParam[i] = p->isArrayParam;
+            func->arrayParamDim1[i] = p->arrayDim1;
+            func->arrayParamDim2[i] = p->arrayDim2;
             i++;
             p = p->next;
         }
     } else {
         func->paramTypes = NULL;
         func->paramNames = NULL;
+        func->isArrayParam = NULL;
+        func->arrayParamDim1 = NULL;
+        func->arrayParamDim2 = NULL;
     }
     
     func->stackSize = 0;
@@ -378,6 +416,9 @@ int validateFunctionCall(const char* name, struct ASTNode* args) {
     // Check parameter types
     arg = args;
     for (int i = 0; i < func->paramCount && arg; i++) {
+        // Check if parameter is an array
+        int isArrayExpected = (func->isArrayParam && func->isArrayParam[i]) ? 1 : 0;
+        
         char expectedType;
         if (strcmp(func->paramTypes[i], "int") == 0) expectedType = 'i';
         else if (strcmp(func->paramTypes[i], "char") == 0) expectedType = 'c';
@@ -387,6 +428,8 @@ int validateFunctionCall(const char* name, struct ASTNode* args) {
         
         // Determine actual argument type
         char actualType = '?';
+        int isArrayActual = 0;
+        
         if (arg->type && strcmp(arg->type, "num") == 0) {
             actualType = 'i';
         } else if (arg->type && strcmp(arg->type, "char") == 0) {
@@ -400,6 +443,10 @@ int validateFunctionCall(const char* name, struct ASTNode* args) {
             Symbol* sym = getSymbol(arg->name);
             if (sym) {
                 actualType = sym->type;
+                // Check if this variable is an array
+                if (sym->dimensions > 0) {
+                    isArrayActual = 1;
+                }
             }
         } else if (arg->type && strcmp(arg->type, "binop") == 0) {
             actualType = 'i';  // Binary operations result in int
@@ -414,8 +461,21 @@ int validateFunctionCall(const char* name, struct ASTNode* args) {
             }
         }
         
-        // Check type match
-        if (actualType != '?' && expectedType != actualType) {
+        // Check if array expectation matches
+        if (isArrayExpected && !isArrayActual) {
+            fprintf(stderr, "Error: Function '%s' parameter %d expects an array\n",
+                    name, i + 1);
+            return 0;
+        }
+        
+        if (!isArrayExpected && isArrayActual) {
+            fprintf(stderr, "Error: Function '%s' parameter %d expects a scalar value, not an array\n",
+                    name, i + 1);
+            return 0;
+        }
+        
+        // Check type match (skip for arrays passed by reference)
+        if (!isArrayActual && actualType != '?' && expectedType != actualType) {
             char* expectedName = "unknown";
             char* actualName = "unknown";
             
@@ -457,7 +517,15 @@ void enterFunctionScope(const char* funcName) {
         else if (strcmp(func->paramTypes[i], "string") == 0) varType = 's';
         else varType = 'i';
         
-        addVar(func->paramNames[i], 1, 0, varType);
+        // Check if this parameter is an array
+        if (func->isArrayParam && func->isArrayParam[i]) {
+            // For array parameters, we need to know the actual array length
+            // This will be passed at runtime, so we use -1 as a placeholder
+            addArrayParam(func->paramNames[i], func->arrayParamDim1[i], 
+                         func->arrayParamDim2[i], varType, -1);
+        } else {
+            addVar(func->paramNames[i], 1, 0, varType);
+        }
     }
 }
 

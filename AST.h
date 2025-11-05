@@ -22,6 +22,10 @@ typedef struct ASTNode {
     struct ASTNode* params;
     struct ASTNode* body;
     struct ASTNode* args;
+    // Array parameter fields
+    int isArrayParam;         // 1 if this parameter is an array
+    int arrayDim1;            // First dimension (0 if variable-length [])
+    int arrayDim2;            // Second dimension (0 if not applicable)
     // Switch-case fields
     struct ASTNode* switchExpr;
     struct ASTNode* cases;
@@ -72,6 +76,7 @@ ASTNode* createContinue();
 // Function-related node creation
 ASTNode* createFunctionDecl(char* returnType, char* name, ASTNode* params, ASTNode* body);
 ASTNode* createParam(char* type, char* name);
+ASTNode* createArrayParam(char* type, char* name, int dim1, int dim2);
 ASTNode* createParamList(ASTNode* list, ASTNode* param);
 ASTNode* createFunctionCall(char* name, ASTNode* args);
 ASTNode* createArgList(ASTNode* list, ASTNode* arg);

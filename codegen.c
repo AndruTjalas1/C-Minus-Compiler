@@ -215,15 +215,37 @@ void genExprMips(ASTNode* node, FILE* out) {
         
         genExprMips(node->left, out);
         
-        if (sym->type == 'c') {
-            fprintf(out, "    la $t1, var_%s\n", sym->name);
-            fprintf(out, "    add $t1, $t1, $t0\n");
-            fprintf(out, "    lb $t0, 0($t1)\n");
+        // Check if this is an array parameter (passed by reference)
+        if (sym->isArrayParam) {
+            // For array parameters, load the pointer first, then dereference
+            fprintf(out, "    move $t2, $t0\n");  // Save index in $t2
+            
+            // Get the actual stack offset for this parameter
+            int found = 0;
+            int offset = getLocalVarOffset(sym->name, &found);
+            
+            if (sym->type == 'c') {
+                fprintf(out, "    lw $t1, %d($fp)\n", offset);  // Load pointer from stack
+                fprintf(out, "    add $t1, $t1, $t2\n");
+                fprintf(out, "    lb $t0, 0($t1)\n");
+            } else {
+                fprintf(out, "    lw $t1, %d($fp)\n", offset);  // Load pointer from stack
+                fprintf(out, "    sll $t2, $t2, 2\n");
+                fprintf(out, "    add $t1, $t1, $t2\n");
+                fprintf(out, "    lw $t0, 0($t1)\n");
+            }
         } else {
-            fprintf(out, "    sll $t0, $t0, 2\n");
-            fprintf(out, "    la $t1, var_%s\n", sym->name);
-            fprintf(out, "    add $t1, $t1, $t0\n");
-            fprintf(out, "    lw $t0, 0($t1)\n");
+            // For local/global arrays, use the original logic
+            if (sym->type == 'c') {
+                fprintf(out, "    la $t1, var_%s\n", sym->name);
+                fprintf(out, "    add $t1, $t1, $t0\n");
+                fprintf(out, "    lb $t0, 0($t1)\n");
+            } else {
+                fprintf(out, "    sll $t0, $t0, 2\n");
+                fprintf(out, "    la $t1, var_%s\n", sym->name);
+                fprintf(out, "    add $t1, $t1, $t0\n");
+                fprintf(out, "    lw $t0, 0($t1)\n");
+            }
         }
     }
     else if (strcmp(node->type, "array2d_access") == 0) {
@@ -256,6 +278,9 @@ void genExprMips(ASTNode* node, FILE* out) {
         // Function call - modern calling convention
         fprintf(out, "    # Function call: %s\n", node->name);
         
+        // Get function symbol to check parameter types
+        FunctionSymbol* funcSym = getFunction(node->name);
+        
         // Count arguments
         int argCount = 0;
         ASTNode* arg = node->args;
@@ -277,7 +302,26 @@ void genExprMips(ASTNode* node, FILE* out) {
             
             // Push in reverse order
             for (i = argCount - 1; i >= 0; i--) {
-                genExprMips(argArray[i], out);
+                // Check if this argument is being passed to an array parameter
+                int isArrayParam = 0;
+                if (funcSym && funcSym->isArrayParam && i < funcSym->paramCount) {
+                    isArrayParam = funcSym->isArrayParam[i];
+                }
+                
+                // If this is an array parameter and the argument is a variable (array)
+                if (isArrayParam && argArray[i]->type && 
+                    (strcmp(argArray[i]->type, "var") == 0 || strcmp(argArray[i]->type, "array_access") == 0 || 
+                     strcmp(argArray[i]->type, "array2d_access") == 0)) {
+                    // For arrays, we need to pass the address, not the value
+                    Symbol* arrSym = lookupSymbol(argArray[i]->name);
+                    if (arrSym) {
+                        fprintf(out, "    la $t0, var_%s\n", arrSym->name);
+                    }
+                } else {
+                    // For non-array arguments, evaluate the expression normally
+                    genExprMips(argArray[i], out);
+                }
+                
                 fprintf(out, "    addi $sp, $sp, -4\n");
                 fprintf(out, "    sw $t0, 0($sp)\n");
             }

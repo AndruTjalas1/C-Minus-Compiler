@@ -13,6 +13,9 @@ typedef struct FunctionSymbol {
     int paramCount;
     char** paramTypes;
     char** paramNames;
+    int* isArrayParam;        // 1 if param is array, 0 otherwise
+    int* arrayParamDim1;      // First dimension (0 if variable-length)
+    int* arrayParamDim2;      // Second dimension (0 if variable-length)
     int stackSize;
     struct FunctionSymbol* next;
 } FunctionSymbol;
@@ -29,6 +32,8 @@ typedef struct Symbol {
     int initCount;
     char* stringValue;
     char* scope;  // Function scope (NULL for global variables)
+    int isArrayParam;         // 1 if this is an array parameter
+    int arrayLength;          // Length passed for variable-length array params (-1 if not applicable)
     struct Symbol* next;  // For hash chaining
 } Symbol;
 
@@ -50,6 +55,7 @@ unsigned int hash_symbol(const char* str);
 
 void initSymTab();
 int addVar(char* name, int size, int initial_value, char type);
+int addArrayParam(char* name, int dim1, int dim2, char type, int arrayLength);
 int addArray(char* name, int dim1, char type);
 int addArrayWithInit(char* name, int dim1, char type, int* initValues, int initCount);
 int add2DArray(char* name, int dim1, int dim2, char type);
