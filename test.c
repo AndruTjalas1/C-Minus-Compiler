@@ -425,43 +425,47 @@ write(n);
 /* Test Boolean Variable Types */
 
 /* Boolean declarations */
-bool isReady;
-bool isActive;
+int isReady;
+int isActive;
 
 /* Initialize booleans with literals */
-bool flag = true;
-bool status = false;
+int flag = 1;
+int status = 0;
 
 /* Boolean in arithmetic */
 int x = 5;
 int y = x + flag;
 
 /* Boolean in conditions */
-if (flag == true) {
+if (flag == 1) {
+    write("Boolean flag is true: ");
     write(1);
 }
 
-if (status == false) {
+if (status == 0) {
+    write("Boolean status is false: ");
     write(0);
 }
 
 /* Boolean variable assignment */
-isReady = true;
-isActive = false;
+isReady = 1;
+isActive = 0;
 
 /* Use boolean in expressions */
 int resul = isReady + isActive;
+write("Boolean isReady + isActive result: ");
 write(resul);
 
 /* Loop with boolean */
-bool done = false;
+int done = 0;
 int count = 0;
-while (done == false) {
+while (done == 0) {
     count = count + 1;
     if (count == 5) {
-        done = true;
+        done = 1;
     }
 }
+write("Boolean loop count: ");
 write(count);
 
 /* Comprehensive Recursive Functions Test */
@@ -543,30 +547,40 @@ function int countdown(int n) {
 /* Main program */
 int resut;
 
+write("===== RECURSIVE FUNCTION TESTS =====");
 write(999);
 
 /* Test factorial */
+write("Factorial(5) = ");
 resut = factorial(5);
 write(resut);
 
 /* Test fibonacci */
+write("Fibonacci(7) = ");
 resut = fibonacci(7);
 write(resut);
 
 /* Test sumToN */
+write("Sum from 1 to 10 = ");
 resut = sumToN(10);
 write(resut);
+
 /* Test power */
+write("2^5 = ");
 resut = power(2, 5);
 write(resut);
 
 /* Test GCD */
+write("GCD(48, 18) = ");
 resut = gcd(48, 18);
 write(resut);
+
 /* Test countdown */
+write("Countdown from 5:");
 write(888);
 resut = countdown(5);
 
+write("===== SIMPLE FUNCTION TESTS =====");
 write(777);
 
 /*Simple function that adds two numbers*/
@@ -593,12 +607,15 @@ a = 5;
 b = 3;
 
 sum = add(a, b);
+write("Sum of 5 + 3 = ");
 write(sum);
 
 product = multiply(a, b);
+write("Product of 5 * 3 = ");
 write(product);
 
 constant = getConstant();
+write("Constant function result = ");
 write(constant);
 
 /* Test file for switch-case and break/continue statements */
@@ -611,6 +628,8 @@ int i;
 choice = 2;
 
 /* Switch statement with multiple cases */
+write("===== SWITCH STATEMENT TEST =====");
+write("Switch on choice (2), expect 200: ");
 switch (choice) {
     case 1:
         write(100);
@@ -626,6 +645,7 @@ switch (choice) {
 }
 
 /* For loop with break */
+write("For loop 0 to 5 (break at 5): ");
 for (i = 0; i < 10; i++) {
     write(i);
     if (i == 5) {
@@ -634,6 +654,7 @@ for (i = 0; i < 10; i++) {
 }
 
 /* While loop with continue */
+write("While loop 0 to 9 (skip 3): ");
 counter = 0;
 while (counter < 9) {
     counter++;
@@ -644,6 +665,7 @@ while (counter < 9) {
 }
 
 /* Switch with fall-through (no break) */
+write("Switch with fall-through (1 -> 10,20): ");
 choice = 1;
 switch (choice) {
     case 1:
@@ -656,6 +678,7 @@ switch (choice) {
 }
 
 /* Nested loops with break and continue */
+write("Nested loops with break/continue: ");
 for (i = 0; i < 5; i++) {
     counter = 0;
     while (counter < 5) {
