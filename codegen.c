@@ -360,6 +360,80 @@ void genExprMips(ASTNode* node, FILE* out) {
         fprintf(out, "    lw $s0, 0($sp)\n");
         fprintf(out, "    addi $sp, $sp, 4\n");
     }
+    else if (strcmp(node->type, "condition") == 0) {
+        // Handle conditions as expressions - evaluate to 1 (true) or 0 (false)
+        char* op = node->name;
+        
+        // Save $s0 on stack
+        fprintf(out, "    addi $sp, $sp, -4\n");
+        fprintf(out, "    sw $s0, 0($sp)\n");
+        
+        genExprMips(node->left, out);
+        fprintf(out, "    move $s0, $t0\n");
+        
+        if (node->right) {
+            genExprMips(node->right, out);
+            fprintf(out, "    move $s1, $t0\n");
+            
+            if (strcmp(op, "==") == 0) {
+                fprintf(out, "    beq $s0, $s1, cond_true_%p\n", (void*)node);
+            } else if (strcmp(op, "!=") == 0) {
+                fprintf(out, "    bne $s0, $s1, cond_true_%p\n", (void*)node);
+            } else if (strcmp(op, "<") == 0) {
+                fprintf(out, "    blt $s0, $s1, cond_true_%p\n", (void*)node);
+            } else if (strcmp(op, "<=") == 0) {
+                fprintf(out, "    ble $s0, $s1, cond_true_%p\n", (void*)node);
+            } else if (strcmp(op, ">") == 0) {
+                fprintf(out, "    bgt $s0, $s1, cond_true_%p\n", (void*)node);
+            } else if (strcmp(op, ">=") == 0) {
+                fprintf(out, "    bge $s0, $s1, cond_true_%p\n", (void*)node);
+            } else if (strcmp(op, "&&") == 0) {
+                fprintf(out, "    beq $s0, $0, cond_false_%p\n", (void*)node);
+                fprintf(out, "    beq $s1, $0, cond_false_%p\n", (void*)node);
+                fprintf(out, "    li $t0, 1\n");
+                fprintf(out, "    j cond_end_%p\n", (void*)node);
+                fprintf(out, "cond_false_%p:\n", (void*)node);
+                fprintf(out, "    li $t0, 0\n");
+                fprintf(out, "    j cond_end_%p\n", (void*)node);
+                fprintf(out, "cond_true_%p:\n", (void*)node);
+                fprintf(out, "    li $t0, 1\n");
+                fprintf(out, "cond_end_%p:\n", (void*)node);
+                fprintf(out, "    lw $s0, 0($sp)\n");
+                fprintf(out, "    addi $sp, $sp, 4\n");
+                return;
+            } else if (strcmp(op, "||") == 0) {
+                fprintf(out, "    bne $s0, $0, cond_true_%p\n", (void*)node);
+                fprintf(out, "    bne $s1, $0, cond_true_%p\n", (void*)node);
+                fprintf(out, "    li $t0, 0\n");
+                fprintf(out, "    j cond_end_%p\n", (void*)node);
+                fprintf(out, "cond_true_%p:\n", (void*)node);
+                fprintf(out, "    li $t0, 1\n");
+                fprintf(out, "cond_end_%p:\n", (void*)node);
+                fprintf(out, "    lw $s0, 0($sp)\n");
+                fprintf(out, "    addi $sp, $sp, 4\n");
+                return;
+            } else if (strcmp(op, "xor") == 0) {
+                fprintf(out, "    xor $t0, $s0, $s1\n");
+            }
+            
+            fprintf(out, "    li $t0, 0\n");
+            fprintf(out, "    j cond_end_%p\n", (void*)node);
+            fprintf(out, "cond_true_%p:\n", (void*)node);
+            fprintf(out, "    li $t0, 1\n");
+            fprintf(out, "cond_end_%p:\n", (void*)node);
+        } else if (strcmp(op, "!") == 0) {
+            fprintf(out, "    beq $s0, $0, cond_true_not_%p\n", (void*)node);
+            fprintf(out, "    li $t0, 0\n");
+            fprintf(out, "    j cond_end_not_%p\n", (void*)node);
+            fprintf(out, "cond_true_not_%p:\n", (void*)node);
+            fprintf(out, "    li $t0, 1\n");
+            fprintf(out, "cond_end_not_%p:\n", (void*)node);
+        }
+        
+        // Restore $s0
+        fprintf(out, "    lw $s0, 0($sp)\n");
+        fprintf(out, "    addi $sp, $sp, 4\n");
+    }
 }
 
 /* Generate MIPS for conditions with logical operators */
@@ -610,7 +684,6 @@ void genStmtMips(ASTNode* node, FILE* out) {
                 genExprMips(p->left, out);
                 fprintf(out, "    move $a0, $t0\n");
                 fprintf(out, "    li $v0, 4\n    syscall\n");
-                fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n");
                 p = p->next;
                 continue;
             }
@@ -620,7 +693,6 @@ void genStmtMips(ASTNode* node, FILE* out) {
                 if (sym && sym->stringValue) {
                     fprintf(out, "    la $a0, var_%s\n", sym->name);
                     fprintf(out, "    li $v0, 4\n    syscall\n");
-                    fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n");
                     p = p->next;
                     continue;
                 }
@@ -629,7 +701,6 @@ void genStmtMips(ASTNode* node, FILE* out) {
                     genExprMips(p->left, out);  // Get the string address into $t0
                     fprintf(out, "    move $a0, $t0\n");  // Address is in $t0
                     fprintf(out, "    li $v0, 4\n    syscall\n");  // Print string
-                    fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n");  // Print newline
                     p = p->next;
                     continue;
                 }
@@ -661,7 +732,74 @@ void genStmtMips(ASTNode* node, FILE* out) {
             else {
                 fprintf(out, "    move $a0, $t0\n    li $v0, 1\n    syscall\n");
             }
+        }
+        else if (strcmp(p->type, "println") == 0) {
+            // println: print the value with a newline
+            if (p->left == NULL) {
+                // Just print newline
+                fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n");
+                p = p->next;
+                continue;
+            }
             
+            // Check if printing a string literal
+            if (strcmp(p->left->type, "string_literal") == 0) {
+                genExprMips(p->left, out);
+                fprintf(out, "    move $a0, $t0\n");
+                fprintf(out, "    li $v0, 4\n    syscall\n");
+                fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n");
+                p = p->next;
+                continue;
+            }
+            // Check if printing a string variable
+            if (strcmp(p->left->type, "var") == 0) {
+                Symbol* sym = lookupSymbol(p->left->name);
+                if (sym && sym->stringValue) {
+                    fprintf(out, "    la $a0, var_%s\n", sym->name);
+                    fprintf(out, "    li $v0, 4\n    syscall\n");
+                    fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n");
+                    p = p->next;
+                    continue;
+                }
+                // Also handle string type variables (from function returns)
+                if (sym && sym->type == 's') {
+                    genExprMips(p->left, out);  // Get the string address into $t0
+                    fprintf(out, "    move $a0, $t0\n");  // Address is in $t0
+                    fprintf(out, "    li $v0, 4\n    syscall\n");  // Print string
+                    fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n");  // Print newline
+                    p = p->next;
+                    continue;
+                }
+            }
+            
+            genExprMips(p->left, out);
+            
+            if (strcmp(p->left->type, "var") == 0) {
+                Symbol* sym = lookupSymbol(p->left->name);
+                if (sym && sym->type == 'c') {
+                    fprintf(out, "    move $a0, $t0\n    li $v0, 11\n    syscall\n");
+                } else if (sym && sym->type == 's') {
+                    fprintf(out, "    move $a0, $t0\n    li $v0, 4\n    syscall\n");  // Print as string
+                } else {
+                    fprintf(out, "    move $a0, $t0\n    li $v0, 1\n    syscall\n");
+                }
+            }
+            else if (strcmp(p->left->type, "char") == 0) {
+                fprintf(out, "    move $a0, $t0\n    li $v0, 11\n    syscall\n");
+            }
+            else if (strcmp(p->left->type, "array_access") == 0 || strcmp(p->left->type, "array2d_access") == 0) {
+                Symbol* sym = lookupSymbol(p->left->name);
+                if (sym && sym->type == 'c') {
+                    fprintf(out, "    move $a0, $t0\n    li $v0, 11\n    syscall\n");
+                } else {
+                    fprintf(out, "    move $a0, $t0\n    li $v0, 1\n    syscall\n");
+                }
+            }
+            else {
+                fprintf(out, "    move $a0, $t0\n    li $v0, 1\n    syscall\n");
+            }
+            
+            // Always add newline for println
             fprintf(out, "    li $a0, 10\n    li $v0, 11\n    syscall\n");
         }
         else if (strcmp(p->type, "if") == 0) {

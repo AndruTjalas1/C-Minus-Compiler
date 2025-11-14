@@ -49,6 +49,7 @@ STRING \"[^\"]*\"
 }
 
 "write"     { return KEYWORD; }
+"writeln"   { return WRITELN; }
 "true"      { 
     yylval.num = 1; 
     return TRUE; 

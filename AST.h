@@ -44,6 +44,7 @@ ASTNode* createStmtList(ASTNode* list, ASTNode* stmt);
 ASTNode* createDecl(char* name);
 ASTNode* createAssign(char* name, ASTNode* expr);
 ASTNode* createPrint(ASTNode* expr);
+ASTNode* createPrintln(ASTNode* expr);
 ASTNode* createNum(int value);
 ASTNode* createChar(char c);
 ASTNode* createBool(int value);

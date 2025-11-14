@@ -32,7 +32,7 @@ int* extractInitValues(ASTNode* initList, int* count);
 %token SEMICOLON EQ PLUS MINUS MULTIPLY DIVIDE MODULO
 %token PLUSEQ MINUSEQ MULTEQ DIVEQ MODEQ
 %token PLUSPLUS MINUSMINUS
-%token LBRACKET RBRACKET LBRACE RBRACE COMMA KEYWORD COLON
+%token LBRACKET RBRACKET LBRACE RBRACE COMMA KEYWORD COLON WRITELN
 %token LPAREN RPAREN
 %token IF ELSEIF ELSE
 %token FOR WHILE DO
@@ -276,6 +276,16 @@ print_stmt:
            $$ = createPrint($3);
             // printf("Print statement created\n");
         }
+    | WRITELN LPAREN expression RPAREN SEMICOLON
+        {
+           $$ = createPrintln($3);
+            // printf("Println statement created\n");
+        }
+    | WRITELN SEMICOLON
+        {
+           $$ = createPrintln(NULL);
+            // printf("Println statement (no args) created\n");
+        }
     ;
 
 array_access:
@@ -347,17 +357,7 @@ stmt_block:
     ;
 
 condition:
-      expression EQEQ expression { $$ = createCondition("==", $1, $3); }
-    | expression NEQ expression  { $$ = createCondition("!=", $1, $3); }
-    | expression LT expression   { $$ = createCondition("<", $1, $3); }
-    | expression LE expression   { $$ = createCondition("<=", $1, $3); }
-    | expression GT expression   { $$ = createCondition(">", $1, $3); }
-    | expression GE expression   { $$ = createCondition(">=", $1, $3); }
-    | condition AND condition    { $$ = createCondition("&&", $1, $3); }
-    | condition OR condition     { $$ = createCondition("||", $1, $3); }
-    | condition XOR condition    { $$ = createCondition("xor", $1, $3); }
-    | NOT condition              { $$ = createCondition("!", $2, NULL); }
-    | LPAREN condition RPAREN    { $$ = $2; }
+      expression { $$ = $1; }
     ;
 
 for_stmt:
@@ -608,6 +608,16 @@ expression:
     | expression MULTIPLY expression { $$ = createBinOp('*', $1, $3); }
     | expression DIVIDE expression   { $$ = createBinOp('/', $1, $3); }
     | expression MODULO expression   { $$ = createBinOp('%', $1, $3); }
+    | expression EQEQ expression { $$ = createCondition("==", $1, $3); }
+    | expression NEQ expression  { $$ = createCondition("!=", $1, $3); }
+    | expression LT expression   { $$ = createCondition("<", $1, $3); }
+    | expression LE expression   { $$ = createCondition("<=", $1, $3); }
+    | expression GT expression   { $$ = createCondition(">", $1, $3); }
+    | expression GE expression   { $$ = createCondition(">=", $1, $3); }
+    | expression AND expression    { $$ = createCondition("&&", $1, $3); }
+    | expression OR expression     { $$ = createCondition("||", $1, $3); }
+    | expression XOR expression    { $$ = createCondition("xor", $1, $3); }
+    | NOT expression              { $$ = createCondition("!", $2, NULL); }
     ;
 
 %%

@@ -212,6 +212,12 @@ ASTNode* createPrint(ASTNode* expr) {
     return node;
 }
 
+ASTNode* createPrintln(ASTNode* expr) {
+    ASTNode* node = newNode("println");
+    node->left = expr;   // expression to print (or NULL for just newline)
+    return node;
+}
+
 ASTNode* createArrayAccess(char* name, ASTNode* index) {
     ASTNode* node = newNode("array_access");
     node->name = intern_string(name);
