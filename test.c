@@ -170,10 +170,10 @@ if (myX < 1 || myY > 15) {
 }
 
 /* Test NOT operator (!) */
-int flag = 1;
+bool flag = true;
 
-if (!(flag == 1)) {
-    write("Testing NOT operator: flag is not 1");
+if (!(flag == true)) {
+    write("Testing NOT operator: flag is not true");
     write(3);
 }
 
@@ -425,31 +425,29 @@ write(n);
 /* Test Boolean Variable Types */
 
 /* Boolean declarations */
-int isReady;
-int isActive;
+bool isReady;
+bool isActive;
 
 /* Initialize booleans with literals */
-int flag = 1;
-int status = 0;
+bool flag = true;
+bool status = false;
 
 /* Boolean in arithmetic */
 int x = 5;
 int y = x + flag;
 
 /* Boolean in conditions */
-if (flag == 1) {
-    write("Boolean flag is true: ");
+if (flag == true) {
     write(1);
 }
 
-if (status == 0) {
-    write("Boolean status is false: ");
+if (status == false) {
     write(0);
 }
 
 /* Boolean variable assignment */
-isReady = 1;
-isActive = 0;
+isReady = true;
+isActive = false;
 
 /* Use boolean in expressions */
 int resul = isReady + isActive;
@@ -457,12 +455,12 @@ write("Boolean isReady + isActive result: ");
 write(resul);
 
 /* Loop with boolean */
-int done = 0;
+bool done = false;
 int count = 0;
-while (done == 0) {
+while (done == false) {
     count = count + 1;
     if (count == 5) {
-        done = 1;
+        done = true;
     }
 }
 write("Boolean loop count: ");
