@@ -646,15 +646,37 @@ void genStmtMips(ASTNode* node, FILE* out) {
             if (strcmp(arrayAccess->type, "array_access") == 0) {
                 genExprMips(arrayAccess->left, out);
                 
-                if (sym->type == 'c') {
-                    fprintf(out, "    la $t1, var_%s\n", sym->name);
-                    fprintf(out, "    add $t1, $t1, $t0\n");
-                    fprintf(out, "    sb $t9, 0($t1)\n");
+                // Check if this is an array parameter (passed by reference)
+                if (sym->isArrayParam) {
+                    // For array parameters, load the pointer first, then dereference
+                    fprintf(out, "    move $t2, $t0\n");  // Save index in $t2
+                    
+                    // Get the actual stack offset for this parameter
+                    int found = 0;
+                    int offset = getLocalVarOffset(sym->name, &found);
+                    
+                    if (sym->type == 'c') {
+                        fprintf(out, "    lw $t1, %d($fp)\n", offset);  // Load pointer from stack
+                        fprintf(out, "    add $t1, $t1, $t2\n");
+                        fprintf(out, "    sb $t9, 0($t1)\n");
+                    } else {
+                        fprintf(out, "    lw $t1, %d($fp)\n", offset);  // Load pointer from stack
+                        fprintf(out, "    sll $t2, $t2, 2\n");
+                        fprintf(out, "    add $t1, $t1, $t2\n");
+                        fprintf(out, "    sw $t9, 0($t1)\n");
+                    }
                 } else {
-                    fprintf(out, "    sll $t0, $t0, 2\n");
-                    fprintf(out, "    la $t1, var_%s\n", sym->name);
-                    fprintf(out, "    add $t1, $t1, $t0\n");
-                    fprintf(out, "    sw $t9, 0($t1)\n");
+                    // For local/global arrays, use the original logic
+                    if (sym->type == 'c') {
+                        fprintf(out, "    la $t1, var_%s\n", sym->name);
+                        fprintf(out, "    add $t1, $t1, $t0\n");
+                        fprintf(out, "    sb $t9, 0($t1)\n");
+                    } else {
+                        fprintf(out, "    sll $t0, $t0, 2\n");
+                        fprintf(out, "    la $t1, var_%s\n", sym->name);
+                        fprintf(out, "    add $t1, $t1, $t0\n");
+                        fprintf(out, "    sw $t9, 0($t1)\n");
+                    }
                 }
             }
             else if (strcmp(arrayAccess->type, "array2d_access") == 0) {
@@ -666,15 +688,33 @@ void genStmtMips(ASTNode* node, FILE* out) {
                 genExprMips(arrayAccess->right, out);
                 fprintf(out, "    add $t0, $t2, $t0\n");
                 
-                if (sym->type == 'c') {
-                    fprintf(out, "    la $t1, var_%s\n", sym->name);
-                    fprintf(out, "    add $t1, $t1, $t0\n");
-                    fprintf(out, "    sb $t9, 0($t1)\n");
+                // Check if this is an array parameter
+                if (sym->isArrayParam) {
+                    fprintf(out, "    move $t2, $t0\n");  // Save final index
+                    int found = 0;
+                    int offset = getLocalVarOffset(sym->name, &found);
+                    
+                    if (sym->type == 'c') {
+                        fprintf(out, "    lw $t1, %d($fp)\n", offset);
+                        fprintf(out, "    add $t1, $t1, $t2\n");
+                        fprintf(out, "    sb $t9, 0($t1)\n");
+                    } else {
+                        fprintf(out, "    lw $t1, %d($fp)\n", offset);
+                        fprintf(out, "    sll $t2, $t2, 2\n");
+                        fprintf(out, "    add $t1, $t1, $t2\n");
+                        fprintf(out, "    sw $t9, 0($t1)\n");
+                    }
                 } else {
-                    fprintf(out, "    sll $t0, $t0, 2\n");
-                    fprintf(out, "    la $t1, var_%s\n", sym->name);
-                    fprintf(out, "    add $t1, $t1, $t0\n");
-                    fprintf(out, "    sw $t9, 0($t1)\n");
+                    if (sym->type == 'c') {
+                        fprintf(out, "    la $t1, var_%s\n", sym->name);
+                        fprintf(out, "    add $t1, $t1, $t0\n");
+                        fprintf(out, "    sb $t9, 0($t1)\n");
+                    } else {
+                        fprintf(out, "    sll $t0, $t0, 2\n");
+                        fprintf(out, "    la $t1, var_%s\n", sym->name);
+                        fprintf(out, "    add $t1, $t1, $t0\n");
+                        fprintf(out, "    sw $t9, 0($t1)\n");
+                    }
                 }
             }
         }

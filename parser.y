@@ -602,7 +602,7 @@ expression:
       }
     | function_call      { $$ = $1; }
     | array_access       { $$ = $1; }
-    | '(' expression ')' { $$ = $2; }
+    | LPAREN expression RPAREN { $$ = $2; }
     | expression PLUS expression     { $$ = createBinOp('+', $1, $3); }
     | expression MINUS expression    { $$ = createBinOp('-', $1, $3); }
     | expression MULTIPLY expression { $$ = createBinOp('*', $1, $3); }
@@ -618,6 +618,7 @@ expression:
     | expression OR expression     { $$ = createCondition("||", $1, $3); }
     | expression XOR expression    { $$ = createCondition("xor", $1, $3); }
     | NOT expression              { $$ = createCondition("!", $2, NULL); }
+    | MINUS expression %prec NOT  { $$ = createBinOp('-', createNum(0), $2); }
     ;
 
 %%
