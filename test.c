@@ -8,63 +8,66 @@ int quotient;
 char apple = 'B';
 /*apple = 'A';*/
 
-write("Testing character variable:");
-write(apple);
+writeln("Testing character variable:");
+writeln(apple);
 
 char c = 'A';
 string msg = "Hello World";
-write("Testing character 'A':");
-write(c);
-write("Testing string message:");
-write(msg);
+writeln("Testing character 'A':");
+writeln(c);
+writeln("Testing string message:");
+writeln(msg);
 
 x = 5;
 y = 10;
-sum = y - x * 6 / 3;
+sum = y + x;
 product = y * x;
 difference = y - x;
 quotient = y / x;
+int operatorPrecedence = 10 + 4 / 2;
 
-write("Testing arithmetic - sum:");
-write(sum);
-write("Testing arithmetic - product:");
-write(product);
-write("Testing arithmetic - difference:");
-write(difference);
-write("Testing arithmetic - quotient:");
-write(quotient);
+write("Testing arithmetic - sum: ");
+writeln(sum);
+write("Testing arithmetic - product: ");
+writeln(product);
+write("Testing arithmetic - difference: ");
+writeln(difference);
+write("Testing arithmetic - quotient: ");
+writeln(quotient);
+write("Testing operator precedence (10 + 5 * 2): ");
+writeln(operatorPrecedence);
 
 int arr1[3];
 arr1[0] = 1;
 arr1[1] = 2;
 arr1[2] = arr1[0] + arr1[1];
 
-write("Testing array element addition result:");
-write(arr1[2]);
+write("Testing array element addition result: ");
+writeln(arr1[2]);
 
 int arr[5] = {10, 20, 30, 40, 50};
 char carr[3] = {'A', 'B', 'C'};
-write("Testing array element [0]:");
-write(arr[0]);
-write("Testing array element [1]:");
-write(arr[1]);
-write("Testing char array element [0]:");
-write(carr[0]);
-write("Testing char array element [1]:");
-write(carr[1]);
-write("Testing char array element [0] again:");
-write(carr[0]);
-write("Testing char array element [1] again:");
-write(carr[1]);
+write("Testing array element [0]: ");
+writeln(arr[0]);
+write("Testing array element [1]: ");
+writeln(arr[1]);
+write("Testing char array element [0]: ");
+writeln(carr[0]);
+write("Testing char array element [1]: ");
+writeln(carr[1]);
+write("Testing char array element [0] again: ");
+writeln(carr[0]);
+write("Testing char array element [1] again: ");
+writeln(carr[1]);
 
 int matrix[2][3];
 matrix[0][0] = 1;
 matrix[0][1] = 2;
 
-write("Testing 2D array element [0][0]:");
-write(matrix[0][0]);
-write("Testing 2D array element [0][1]:");
-write(matrix[0][1]);
+write("Testing 2D array element [0][0]: ");
+writeln(matrix[0][0]);
+write("Testing 2D array element [0][1]: ");
+writeln(matrix[0][1]);
 
 char cmatrix[2][2];
 cmatrix[0][0] = 'M';
@@ -72,14 +75,14 @@ cmatrix[0][1] = 'N';
 cmatrix[1][0] = 'O';
 cmatrix[1][1] = 'P';
 
-write("Testing char matrix element [0][0]:");
-write(cmatrix[0][0]);
-write("Testing char matrix element [0][1]:");
-write(cmatrix[0][1]);
-write("Testing char matrix element [1][0]:");
-write(cmatrix[1][0]);
-write("Testing char matrix element [1][1]:");
-write(cmatrix[1][1]);
+write("Testing char matrix element [0][0]: ");
+writeln(cmatrix[0][0]);
+write("Testing char matrix element [0][1]: ");
+writeln(cmatrix[0][1]);
+write("Testing char matrix element [1][0]: ");
+writeln(cmatrix[1][0]);
+write("Testing char matrix element [1][1]: ");
+writeln(cmatrix[1][1]);
 
 /* Test 2D Array Initialization */
 
@@ -104,46 +107,46 @@ matrix1[1][1] = 20;
 matrix1[2][2] = 30;
 
 /* Print 2D array elements */
-write("Testing initialized 2D array matrix2[0][0]:");
-write(matrix2[0][0]);
-write("Testing initialized 2D array matrix2[0][1]:");
-write(matrix2[0][1]);
-write("Testing initialized 2D array matrix2[1][2]:");
-write(matrix2[1][2]);
-write("Testing initialized 2D array grid[2][1]:");
-write(grid[2][1]);
+write("Testing initialized 2D array matrix2[0][0]: ");
+writeln(matrix2[0][0]);
+write("Testing initialized 2D array matrix2[0][1]: ");
+writeln(matrix2[0][1]);
+write("Testing initialized 2D array matrix2[1][2]: ");
+writeln(matrix2[1][2]);
+write("Testing initialized 2D array grid[2][1]: ");
+writeln(grid[2][1]);
 
-write("Testing partial initialization sparse[0][0]:");
-write(sparse[0][0]);
-write("Testing partial initialization sparse[1][1] (should be 0):");
-write(sparse[1][1]);
-write("Testing manually assigned matrix1[0][0]:");
-write(matrix1[0][0]);
-write("Testing manually assigned matrix1[1][1]:");
-write(matrix1[1][1]);
+write("Testing partial initialization sparse[0][0]: ");
+writeln(sparse[0][0]);
+write("Testing partial initialization sparse[1][1] (should be 0): ");
+writeln(sparse[1][1]);
+write("Testing manually assigned matrix1[0][0]: ");
+writeln(matrix1[0][0]);
+write("Testing manually assigned matrix1[1][1]: ");
+writeln(matrix1[1][1]);
 
 if (x > y) {
-    write("Testing if x > y: print x");
-    write(x);
+    write("Testing if x > y: print x ");
+    writeln(x);
 }
 
 if (x < y) {
-    write("Testing if x < y: print y");
-    write(y);
+    write("Testing if x < y: print y ");
+    writeln(y);
 } else {
-    write("Testing else: print x");
-    write(x);
+    write("Testing else: print x ");
+    writeln(x);
 }
 
 if (x == 5) {
-    write("Testing if x == 5: print 1");
-    write(1);
+    writeln("Testing if x == 5: print 1");
+    writeln(1);
 } elseif (x == 10) {
-    write("Testing elseif x == 10: print 2");
-    write(2);
+    writeln("Testing elseif x == 10: print 2");
+    writeln(2);
 } else {
-    write("Testing else: print 3");
-    write(3);
+    writeln("Testing else: print 3");
+    writeln(3);
 }
 
 /*
@@ -156,8 +159,8 @@ int myA = 5;
 int myB = 10;
 
 if (myA > 3 && myB < 15) {
-    write("Testing AND operator: both conditions true");
-    write(1);
+    writeln("Testing AND operator: both conditions true");
+    writeln(1);
 }
 
 /* Test OR operator (||) */
@@ -165,16 +168,16 @@ int myX = 2;
 int myY = 20;
 
 if (myX < 1 || myY > 15) {
-    write("Testing OR operator: at least one condition true");
-    write(2);
+    writeln("Testing OR operator: at least one condition true");
+    writeln(2);
 }
 
 /* Test NOT operator (!) */
 bool flag = true;
 
 if (!(flag == true)) {
-    write("Testing NOT operator: flag is not true");
-    write(3);
+    writeln("Testing NOT operator: flag is not true");
+    writeln(3);
 }
 
 /* Test XOR operator */
@@ -182,8 +185,8 @@ int myP = 5;
 int myQ = 8;
 
 if ((myP > 3) ^ (myQ < 5)) {
-    write("Testing XOR operator: only one condition true");
-    write(4);
+    writeln("Testing XOR operator: only one condition true");
+    writeln(4);
 }
 
 /* Complex example with multiple operators */
@@ -192,8 +195,8 @@ int hasLicense = 1;
 int hasInsurance = 1;
 
 if ((age >= 18 && hasLicense == 1) && hasInsurance == 1) {
-    write("Testing complex AND: all conditions true");
-    write(5);
+    writeln("Testing complex AND: all conditions true");
+    writeln(5);
 }
 
 /* Nested logical operators */
@@ -201,8 +204,8 @@ int score = 85;
 int bonus = 10;
 
 if ((score > 80 && bonus > 5) || score > 90) {
-    write("Testing nested logical operators");
-    write(6);
+    writeln("Testing nested logical operators");
+    writeln(6);
 }
 
 /* XOR with complex expressions */
@@ -210,8 +213,8 @@ int val1 = 10;
 int val2 = 5;
 
 if ((val1 > 8 && val2 < 10) ^ (val1 < 12 && val2 > 3)) {
-    write("Testing XOR with complex expressions");
-    write(7);
+    writeln("Testing XOR with complex expressions");
+    writeln(7);
 }
 
 /* NOT with compound condition */
@@ -219,34 +222,34 @@ int enabled = 0;
 int ready = 1;
 
 if (!(enabled == 1 && ready == 1)) {
-    write("Testing NOT with compound condition");
-    write(8);
+    writeln("Testing NOT with compound condition");
+    writeln(8);
 }
 
 /* Simple loop test - counts 1 to 5 three different ways */
 
 /* For loop */
 int i;
-write("Testing for loop 1 to 5:");
+writeln("Testing for loop 1 to 5:");
 for (i = 1; i <= 5; i = i + 1) {
-    write(i);
+    writeln(i);
 }
 
 /* While loop */
 
-write("Testing while loop 1 to 5:");
+writeln("Testing while loop 1 to 5:");
 i = 1;
 while (i <= 5) {
-    write(i);
+    writeln(i);
     i = i + 1;
 }
 
 /* Do-while loop */
 int k;
-write("Testing do-while loop 1 to 5:");
+writeln("Testing do-while loop 1 to 5:");
 k = 1;
 do {
-    write(k);
+    writeln(k);
     k = k + 1;
 } while (k <= 5);
 
@@ -254,45 +257,45 @@ do {
 
 /* Test 1: Simple for loop - count from 0 to 4 */
 
-write("Testing for loop 0 to 4:");
+writeln("Testing for loop 0 to 4:");
 for (i = 0; i < 5; i = i + 1) {
-    write(i);
+    writeln(i);
 }
 
 /* Test 2: For loop with declaration */
-write("Testing for loop with declaration (10 down to 6):");
+writeln("Testing for loop with declaration (10 down to 6):");
 for (int j = 10; j > 5; j = j - 1) {
-    write(j);
+    writeln(j);
 }
 
 /* Test 3: While loop - countdown */
 int count;
-write("Testing while countdown from 6:");
+writeln("Testing while countdown from 6:");
 count = 6;
 while (count > 0) {
-    write(count);
+    writeln(count);
     count = count - 1;
 }
 
 /* Test 4: Do-while loop - executes at least once */
 
-write("Testing do-while with multiplication (doubles until >= 10):");
+writeln("Testing do-while with multiplication (doubles until >= 10):");
 x = 1;
 do {
-    write(x);
+    writeln(x);
     x = x * 2;
 } while (x < 10);
 
 /* Test 5: Nested loops */
 int outer;
 int inner;
-write("Testing nested loops:");
+writeln("Testing nested loops:");
 for (outer = 0; outer < 3; outer = outer + 1) {
     for (inner = 0; inner < 2; inner = inner + 1) {
-        write("outer:");
-        write(outer);
-        write("inner:");
-        write(inner);
+        writeln("outer:");
+        writeln(outer);
+        writeln("inner:");
+        writeln(inner);
     }
 }
 
@@ -305,36 +308,37 @@ arr[3] = 40;
 arr[4] = 50;
 
 int idx;
-write("Testing while loop with array:");
+writeln("Testing while loop with array:");
 idx = 0;
 while (idx < 5) {
-    write("arr[");
+    writeln("arr[");
     write(idx);
-    write("]:");
-    write(arr[idx]);
+    writeln("]:");
+    write("Array index: ");
+    writeln(arr[idx]);
     idx = idx + 1;
 }
 
 /* Test 7: For loop with complex condition */
 int a;
 int myb;
-write("Testing for loop with complex condition:");
+writeln("Testing for loop with complex condition:");
 a = 0;
 myb = 10;
 for (a = 0; a < 5 && myb > 5; a = a + 1) {
-    write("a:");
-    write(a);
-    write("myb:");
-    write(myb);
+    writeln("a:");
+    writeln(a);
+    writeln("myb:");
+    writeln(myb);
     myb = myb - 1;
 }
 
 /* Test 8: Do-while that executes once */
 int test;
-write("Testing do-while that executes once:");
+writeln("Testing do-while that executes once:");
 test = 100;
 do {
-    write(test);
+    writeln(test);
     test = test + 1;
 } while (test < 100);
 
@@ -347,69 +351,69 @@ a = 17;
 b = 5;
 int result;
 result = a % b;  /* Should be 2 */
-write("Testing modulo operator (17 % 5):");
-write(result);
+writeln("Testing modulo operator (17 % 5):");
+writeln(result);
 
 /* Test 2: Compound assignment operators */
 int x;
 x = 10;
-write("Testing initial value of x:");
-write(x);
+writeln("Testing initial value of x:");
+writeln(x);
 
 x += 5;   /* x = 15 */
-write("Testing compound assignment += (x after adding 5):");
-write(x);
+writeln("Testing compound assignment += (x after adding 5):");
+writeln(x);
 
 x -= 3;   /* x = 12 */
-write("Testing compound assignment -= (x after subtracting 3):");
-write(x);
+writeln("Testing compound assignment -= (x after subtracting 3):");
+writeln(x);
 
 x *= 2;   /* x = 24 */
-write("Testing compound assignment *= (x after multiplying by 2):");
-write(x);
+writeln("Testing compound assignment *= (x after multiplying by 2):");
+writeln(x);
 
 x /= 5;   /* x = 6 */
-write("Testing compound assignment /= (x after dividing by 5):");
-write(x);
+writeln("Testing compound assignment /= (x after dividing by 5):");
+writeln(x);
 
 x %= 4;   /* x = 2 */
-write("Testing compound assignment %= (x after modulo 4):");
-write(x);
+writeln("Testing compound assignment %= (x after modulo 4):");
+writeln(x);
 
 /* Test 3: Post-increment and post-decrement */
 int i;
 i = 5;
-write("Testing initial value of i:");
-write(i);
+writeln("Testing initial value of i:");
+writeln(i);
 
 i++;      /* i = 6 */
-write("Testing post-increment (i after i++):");
-write(i);
+writeln("Testing post-increment (i after i++):");
+writeln(i);
 
 i--;      /* i = 5 */
-write("Testing post-decrement (i after i--):");
-write(i);
+writeln("Testing post-decrement (i after i--):");
+writeln(i);
 
 /* Test 4: Pre-increment and pre-decrement */
 int j;
 j = 10;
-write("Testing initial value of j:");
-write(j);
+writeln("Testing initial value of j:");
+writeln(j);
 
 ++j;      /* j = 11 */
-write("Testing pre-increment (j after ++j):");
-write(j);
+writeln("Testing pre-increment (j after ++j):");
+writeln(j);
 
 --j;      /* j = 10 */
-write("Testing pre-decrement (j after --j):");
-write(j);
+writeln("Testing pre-decrement (j after --j):");
+writeln(j);
 
 /* Test 5: Using in loops */
 int k;
-write("Testing loop with modulo (printing even numbers 0-9):");
+writeln("Testing loop with modulo (printing even numbers 0-9):");
 for (k = 0; k < 10; k++) {
     if (k % 2 == 0) {
-        write(k);
+        writeln(k);
     }
 }
 
@@ -419,8 +423,8 @@ n = 100;
 n /= 10;   /* n = 10 */
 n *= 3;    /* n = 30 */
 n %= 7;    /* n = 2 */
-write("Testing combined operators (100 / 10 * 3 % 7):");
-write(n);
+writeln("Testing combined operators (100 / 10 * 3 % 7):");
+writeln(n);
 
 /* Test Boolean Variable Types */
 
@@ -438,11 +442,11 @@ int y = x + flag;
 
 /* Boolean in conditions */
 if (flag == true) {
-    write(1);
+    writeln(1);
 }
 
 if (status == false) {
-    write(0);
+    writeln(0);
 }
 
 /* Boolean variable assignment */
@@ -451,8 +455,8 @@ isActive = false;
 
 /* Use boolean in expressions */
 int resul = isReady + isActive;
-write("Boolean isReady + isActive result: ");
-write(resul);
+writeln("Boolean isReady + isActive result: ");
+writeln(resul);
 
 /* Loop with boolean */
 bool done = false;
@@ -463,8 +467,8 @@ while (done == false) {
         done = true;
     }
 }
-write("Boolean loop count: ");
-write(count);
+writeln("Boolean loop count: ");
+writeln(count);
 
 /* Comprehensive Recursive Functions Test */
 
@@ -533,10 +537,10 @@ function int gcd(int a, int b) {
 /* Countdown - simple recursive function */
 function int countdown(int n) {
     if (n <= 0) {
-        write(0);
+        writeln(0);
         return 0;
     }
-    write(n);
+    writeln(n);
     int next;
     next = n - 1;
     return countdown(next);
@@ -545,41 +549,41 @@ function int countdown(int n) {
 /* Main program */
 int resut;
 
-write("===== RECURSIVE FUNCTION TESTS =====");
-write(999);
+writeln("===== RECURSIVE FUNCTION TESTS =====");
+writeln(999);
 
 /* Test factorial */
-write("Factorial(5) = ");
+writeln("Factorial(5) = ");
 resut = factorial(5);
-write(resut);
+writeln(resut);
 
 /* Test fibonacci */
-write("Fibonacci(7) = ");
+writeln("Fibonacci(7) = ");
 resut = fibonacci(7);
-write(resut);
+writeln(resut);
 
 /* Test sumToN */
-write("Sum from 1 to 10 = ");
+writeln("Sum from 1 to 10 = ");
 resut = sumToN(10);
-write(resut);
+writeln(resut);
 
 /* Test power */
-write("2^5 = ");
+writeln("2^5 = ");
 resut = power(2, 5);
-write(resut);
+writeln(resut);
 
 /* Test GCD */
-write("GCD(48, 18) = ");
+writeln("GCD(48, 18) = ");
 resut = gcd(48, 18);
-write(resut);
+writeln(resut);
 
 /* Test countdown */
-write("Countdown from 5:");
-write(888);
+writeln("Countdown from 5:");
+writeln(888);
 resut = countdown(5);
 
-write("===== SIMPLE FUNCTION TESTS =====");
-write(777);
+writeln("===== SIMPLE FUNCTION TESTS =====");
+writeln(777);
 
 /*Simple function that adds two numbers*/
 function int add(int a, int b) {
@@ -605,16 +609,16 @@ a = 5;
 b = 3;
 
 sum = add(a, b);
-write("Sum of 5 + 3 = ");
-write(sum);
+writeln("Sum of 5 + 3 = ");
+writeln(sum);
 
 product = multiply(a, b);
-write("Product of 5 * 3 = ");
-write(product);
+writeln("Product of 5 * 3 = ");
+writeln(product);
 
 constant = getConstant();
-write("Constant function result = ");
-write(constant);
+writeln("Constant function result = ");
+writeln(constant);
 
 /* Test file for switch-case and break/continue statements */
 
@@ -626,57 +630,57 @@ int i;
 choice = 2;
 
 /* Switch statement with multiple cases */
-write("===== SWITCH STATEMENT TEST =====");
-write("Switch on choice (2), expect 200: ");
+writeln("===== SWITCH STATEMENT TEST =====");
+writeln("Switch on choice (2), expect 200: ");
 switch (choice) {
     case 1:
-        write(100);
+        writeln(100);
         break;
     case 2:
-        write(200);
+        writeln(200);
         break;
     case 3:
-        write(300);
+        writeln(300);
         break;
     default:
-        write(999);
+        writeln(999);
 }
 
 /* For loop with break */
-write("For loop 0 to 5 (break at 5): ");
+writeln("For loop 0 to 5 (break at 5): ");
 for (i = 0; i < 10; i++) {
-    write(i);
+    writeln(i);
     if (i == 5) {
         break;
     }
 }
 
 /* While loop with continue */
-write("While loop 0 to 9 (skip 3): ");
+writeln("While loop 0 to 9 (skip 3): ");
 counter = 0;
 while (counter < 9) {
     counter++;
     if (counter == 3) {
         continue;
     }
-    write(counter);
+    writeln(counter);
 }
 
 /* Switch with fall-through (no break) */
-write("Switch with fall-through (1 -> 10,20): ");
+writeln("Switch with fall-through (1 -> 10,20): ");
 choice = 1;
 switch (choice) {
     case 1:
-        write(10);
+        writeln(10);
     case 2:
-        write(20);
+        writeln(20);
         break;
     default:
-        write(30);
+        writeln(30);
 }
 
 /* Nested loops with break and continue */
-write("Nested loops with break/continue: ");
+writeln("Nested loops with break/continue: ");
 for (i = 0; i < 5; i++) {
     counter = 0;
     while (counter < 5) {
@@ -687,7 +691,7 @@ for (i = 0; i < 5; i++) {
         if (counter == 4) {
             break;
         }
-        write(counter);
+        writeln(counter);
     }
 }
 
@@ -698,181 +702,181 @@ int y;
 int z;
 int result;
 
-write("===== NESTED IF/IF-ELSE STATEMENT TESTS =====");
+writeln("===== NESTED IF/IF-ELSE STATEMENT TESTS =====");
 
 /* Test 1: Simple nested if */
-write("Test 1: Simple Nested If");
+writeln("Test 1: Simple Nested If");
 x = 10;
 y = 5;
 if (x > 5) {
-    write("x is greater than 5");
+    writeln("x is greater than 5");
     if (y < 10) {
-        write("y is less than 10");
+        writeln("y is less than 10");
         if (x + y > 12) {
-            write("x + y is greater than 12");
+            writeln("x + y is greater than 12");
         }
     }
 }
 
 /* Test 2: Nested if-else with multiple branches */
-write("Test 2: Nested If-Else");
+writeln("Test 2: Nested If-Else");
 x = 20;
 y = 15;
 if (x > 15) {
-    write("x is greater than 15");
+    writeln("x is greater than 15");
     if (y == 15) {
-        write("y equals 15");
+        writeln("y equals 15");
     } else {
-        write("y does not equal 15");
+        writeln("y does not equal 15");
     }
 } else {
-    write("x is not greater than 15");
+    writeln("x is not greater than 15");
 }
 
 /* Test 3: Triple nested if-else-if */
-write("Test 3: Triple Nested If-Else-If");
+writeln("Test 3: Triple Nested If-Else-If");
 x = 50;
 y = 30;
 z = 10;
 if (x > 40) {
-    write("x > 40");
+    writeln("x > 40");
     if (y > 20) {
-        write("y > 20");
+        writeln("y > 20");
         if (z < 15) {
-            write("z < 15: All conditions met");
+            writeln("z < 15: All conditions met");
         } else if (z == 15) {
-            write("z equals 15");
+            writeln("z equals 15");
         } else {
-            write("z >= 15");
+            writeln("z >= 15");
         }
     } else if (y == 20) {
-        write("y equals 20");
+        writeln("y equals 20");
     } else {
-        write("y <= 20");
+        writeln("y <= 20");
     }
 } else if (x == 40) {
-    write("x equals 40");
+    writeln("x equals 40");
 } else {
-    write("x <= 40");
+    writeln("x <= 40");
 }
 
 /* Test 4: Deeply nested if-else structure (5 levels) */
-write("Test 4: Deeply Nested If-Else (5 Levels)");
+writeln("Test 4: Deeply Nested If-Else (5 Levels)");
 x = 100;
 y = 75;
 z = 50;
 if (x > 50) {
-    write("Level 1: x > 50");
+    writeln("Level 1: x > 50");
     if (y > 60) {
-        write("Level 2: y > 60");
+        writeln("Level 2: y > 60");
         if (z > 40) {
-            write("Level 3: z > 40");
+            writeln("Level 3: z > 40");
             if (x + y > 150) {
-                write("Level 4: x + y > 150");
+                writeln("Level 4: x + y > 150");
                 if (z < 60) {
-                    write("Level 5: z < 60 - DEEPEST LEVEL");
+                    writeln("Level 5: z < 60 - DEEPEST LEVEL");
                 } else {
-                    write("Level 5: z >= 60");
+                    writeln("Level 5: z >= 60");
                 }
             } else {
-                write("Level 4: x + y <= 150");
+                writeln("Level 4: x + y <= 150");
             }
         } else if (z == 40) {
-            write("Level 3: z equals 40");
+            writeln("Level 3: z equals 40");
         } else {
-            write("Level 3: z < 40");
+            writeln("Level 3: z < 40");
         }
     } else if (y == 60) {
-        write("Level 2: y equals 60");
+        writeln("Level 2: y equals 60");
     } else {
-        write("Level 2: y < 60");
+        writeln("Level 2: y < 60");
     }
 } else if (x == 50) {
-    write("Level 1: x equals 50");
+    writeln("Level 1: x equals 50");
 } else {
-    write("Level 1: x < 50");
+    writeln("Level 1: x < 50");
 }
 
 /* Test 5: Multiple if-else chains at same level */
-write("Test 5: Multiple If-Else Chains");
+writeln("Test 5: Multiple If-Else Chains");
 x = 25;
 if (x < 10) {
-    write("x is in range [0, 10)");
+    writeln("x is in range [0, 10)");
 } else if (x < 20) {
-    write("x is in range [10, 20)");
+    writeln("x is in range [10, 20)");
 } else if (x < 30) {
-    write("x is in range [20, 30)");
+    writeln("x is in range [20, 30)");
 } else if (x < 40) {
-    write("x is in range [30, 40)");
+    writeln("x is in range [30, 40)");
 } else {
-    write("x is 40 or greater");
+    writeln("x is 40 or greater");
 }
 
 /* Test 6: Nested if inside if-else */
-write("Test 6: Nested If Inside If-Else");
+writeln("Test 6: Nested If Inside If-Else");
 x = 35;
 y = 20;
 if (x > 30) {
-    write("x > 30");
+    writeln("x > 30");
     if (y > 15) {
-        write("Both conditions true");
+        writeln("Both conditions true");
     } else {
-        write("x > 30 but y <= 15");
+        writeln("x > 30 but y <= 15");
     }
 } else {
-    write("x <= 30");
+    writeln("x <= 30");
     if (y > 15) {
-        write("x <= 30 but y > 15");
+        writeln("x <= 30 but y > 15");
     }
 }
 
 /* Test 7: Complex logical combinations with nested structures */
-write("Test 7: Complex Nested Logic");
+writeln("Test 7: Complex Nested Logic");
 x = 42;
 y = 18;
 z = 5;
 if (x > 40) {
     if (y >= 15) {
         if (z > 0) {
-            write("All conditions positive");
+            writeln("All conditions positive");
         } else {
-            write("z is not positive");
+            writeln("z is not positive");
         }
     } else {
         if (z < 10) {
-            write("x > 40 and z < 10, but y < 15");
+            writeln("x > 40 and z < 10, but y < 15");
         } else {
-            write("x > 40, but y < 15 and z >= 10");
+            writeln("x > 40, but y < 15 and z >= 10");
         }
     }
 } else {
     if (y >= 15) {
-        write("x <= 40 but y >= 15");
+        writeln("x <= 40 but y >= 15");
     } else {
-        write("Both x and y below threshold");
+        writeln("Both x and y below threshold");
     }
 }
 
 /* Test 8: Nested if with sequential value changes */
-write("Test 8: Sequential Nested Checks");
+writeln("Test 8: Sequential Nested Checks");
 x = 1;
 if (x == 1) {
-    write("Step 1: x is 1");
+    writeln("Step 1: x is 1");
     x = 2;
     if (x == 2) {
-        write("Step 2: x is now 2");
+        writeln("Step 2: x is now 2");
         x = 3;
         if (x == 3) {
-            write("Step 3: x is now 3");
+            writeln("Step 3: x is now 3");
             x = 4;
             if (x == 4) {
-                write("Step 4: x is now 4 - Success");
+                writeln("Step 4: x is now 4 - Success");
             }
         }
     }
 }
 
-write("===== ALL TESTS COMPLETED =====");
+writeln("===== ALL TESTS COMPLETED =====");
 
 /* Test Variable-Length Array Parameters */
 
@@ -894,7 +898,7 @@ function void printArray(int arr[]) {
     int i = 0;
     
     while (i < 5) {
-        write(arr[i]);
+        writeln(arr[i]);
         i++;
     }
 }
@@ -908,16 +912,16 @@ function int processFixed(int arr[10]) {
 int myArray[5] = {10, 20, 30, 40, 50};
 int result;
 
-write("Testing variable-length array parameters:");
-write("Array contents:");
+writeln("Testing variable-length array parameters:");
+writeln("Array contents:");
 printArray(myArray);
 
-write("Sum of array elements:");
+writeln("Sum of array elements:");
 result = sumArray(myArray);
-write(result);
+writeln(result);
 
-write("Testing fixed-size array parameter:");
+writeln("Testing fixed-size array parameter:");
 result = processFixed(myArray);
-write(result);
+writeln(result);
 
-write("Test completed successfully!");
+writeln("Test completed successfully!");
