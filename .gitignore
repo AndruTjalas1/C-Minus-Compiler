@@ -1,0 +1,75 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+
+# Generated files
+lex.yy.c
+parser.tab.c
+parser.tab.h
+location.hh
+
+# Compiler executable
+Compiler
+Compiler.exe
+
+# MIPS output files
+*.s
+output.s
+output.asm
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-*
+
+# Python cache (if using Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS-specific
+.DS_Store
+Thumbs.db
+.directory
+
+# Build system files
+CMakeLists.txt.user
+cmake-build-debug/
+cmake-build-release/
+
+# Temporary files
+*.tmp
+*.bak
+*.temp
+
+# Log files
+*.log
+
+# Executables
+*.exe
+*.out
+
+# Dependencies (if any)
+/deps/
+/lib/
+
+# Local test files
+test_local.c
+test_temp.c
+temp_output.s
+
+# Backup files
+*.backup
+*.orig
+
+# Distribution files
+dist/
+build/
+*.tar.gz
+*.zip

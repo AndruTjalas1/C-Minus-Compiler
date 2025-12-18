@@ -1,6 +1,6 @@
 /*
  * Comprehensive C-Minus Test File
- * CST-405 Compiler Design
+ * c-minus-compiler Design
  *
  * This file tests ALL features of the C-Minus language:
  * - Global and local variables

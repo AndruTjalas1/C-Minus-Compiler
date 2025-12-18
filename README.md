@@ -1,4 +1,40 @@
-# CST-405 Compiler Project
+# c-minus-compiler
+
+A comprehensive **C-like language compiler**
+
+A comprehensive **C-like language compiler** that translates custom source code into **MIPS assembly**. Built with Flex, Bison, and C, this educational compiler demonstrates core compiler concepts including lexical analysis, parsing, AST construction, and code generation.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Language: C](https://img.shields.io/badge/Language-C-blue.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
+[![Build: Make](https://img.shields.io/badge/Build-Make-brightgreen.svg)](https://www.gnu.org/software/make/)
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Language Features](#features)
+- [Architecture](#architecture)
+- [Examples](#examples)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Overview
+
+This compiler implements a subset of C-like syntax and compiles it into executable MIPS assembly code. It's ideal for learning compiler design, studying intermediate code generation, and understanding how source code is transformed into machine instructions.
+
+**Key Capabilities:**
+- 🔤 Lexical analysis with Flex
+- 🌳 Abstract Syntax Tree (AST) construction
+- 🏷️ Symbol table with scope management
+- 📝 Three-Address Code (TAC) generation
+- ⚙️ MIPS assembly code generation
+- 🚀 Performance benchmarking
+
+---
 
 ## Features
 
@@ -78,8 +114,6 @@
 ### Built-in Functions
 - `write(expression)` - Output values to console
 
-## Example Programs
-
 ### Basic Variables and Arithmetic
 ```c
 int x;
@@ -98,35 +132,23 @@ for (i = 0; i < 5; i++) {
 }
 ```
 
-### Loops with Operators
+### Functions and Recursion
 ```c
-int count = 10;
-while (count > 0) {
-    write(count);
-    count--;
-}
-
-for (int i = 0; i < 10; i++) {
-    if (i % 2 == 0) {
-        write(i);  // Print even numbers
+function int factorial(int n) {
+    if (n <= 1) {
+        return 1;
     }
+    return n * factorial(n - 1);
 }
-```
 
-### Compound Operators
-```c
-int x = 10;
-x += 5;   // x = 15
-x *= 2;   // x = 30
-x %= 7;   // x = 2
-write(x);
+int result = factorial(5);
+write(result);  // Output: 120
 ```
 
 ### Nested Loops and 2D Arrays
 ```c
 int matrix[3][3];
-int i;
-int j;
+int i, j;
 
 for (i = 0; i < 3; i++) {
     for (j = 0; j < 3; j++) {
@@ -136,58 +158,207 @@ for (i = 0; i < 3; i++) {
 }
 ```
 
-### Complex Conditions
-```c
-int a = 5;
-int b = 10;
+## Testing
 
-if (a < b && b > 0) {
-    write(1);
-} elseif (a == b || b < 0) {
-    write(2);
-} else {
-    write(3);
+### Included Test Files
+
+| File | Purpose |
+|------|---------|
+| `test.c` | Basic feature testing |
+| `test_functions.c` | Function definitions and calls |
+| `test_recursive.c` | 6 recursive function examples (Factorial, Fibonacci, etc.) |
+| `test_advanced_recursion.c` | Advanced recursion (Ackermann, Tower of Hanoi, etc.) |
+| `test_errors.c` | Error handling tests |
+| `comprehensive_test.cm` | Comprehensive feature test suite |
+
+### Running Tests
+```bash
+make test
+```
+
+## Architecture
+
+**See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical documentation.**
+
+### High-Level Components
+
+| Component | Files | Purpose |
+|-----------|-------|---------|
+| **Lexer** | `lexer.l` | Tokenizes source code |
+| **Parser** | `parser.y` | Builds Abstract Syntax Tree |
+| **AST** | `AST.c/h` | Tree representation with memory pooling |
+| **Symbol Table** | `symtab.c/h` | Variable and scope management |
+| **Code Generator** | `codegen.c/h` | MIPS assembly generation |
+| **TAC** | `tac.c/h` | Three-address code IR |
+| **String Pool** | `stringpool.c/h` | Efficient string storage |
+| **Error Handler** | `error.c/h` | Error reporting and diagnostics |
+
+### Memory Management
+- 🎯 Custom AST node pooling (reduces malloc overhead)
+- 📝 String interning via hash table (reduces memory usage)
+- 🔍 Hash-based symbol table (O(1) lookup)
+
+### Optimizations
+- String deduplication
+- Efficient register allocation
+- Minimal stack usage
+
+## Language Syntax Reference
+
+### Data Types
+- `int` - 32-bit integer
+- `char` - Single character
+- `string` - String literals
+
+### Operators
+```c
+// Arithmetic
++, -, *, /, %
+
+// Comparison
+==, !=, <, <=, >, >=
+
+// Logical
+&&, ||, !, ^
+
+// Unary
+++, --
+
+// Assignment
+=, +=, -=, *=, /=, %=
+```
+
+### Control Flow
+```c
+if (condition) { }
+else if (condition) { }
+else { }
+
+for (init; cond; update) { }
+while (condition) { }
+do { } while (condition);
+```
+
+### Functions
+```c
+function <type> <name>(<params>) {
+    return <value>;
 }
 ```
 
-## Compilation & Execution
+## Known Limitations
 
-### Prerequisites
-- GCC compiler
-- Flex (lexer generator)
-- Bison (parser generator)
-- SPIM (MIPS simulator)
+- ❌ No pointers
+- ❌ No structs or user-defined types
+- ❌ Integer arithmetic only (no floating point)
+- ❌ Limited standard library (only `write()`)
+- ❌ No break/continue statements
 
-### Running the Compiler
+## Future Enhancements
 
-1. **Build the compiler:**
-   ```bash
-   make
-   ```
+- [ ] Break and continue statements
+- [ ] Switch-case statements
+- [ ] Additional built-in functions
+- [ ] Enhanced type checking
+- [ ] Optimization passes
+- [ ] Better error messages with line numbers
 
-2. **Compile your source file:**
-   ```bash
-   ./Compiler input.c output.s
-   ```
-   
-   Replace `input.c` with your source file and `output.s` with desired output file name.
+## Contributing
 
-3. **Run the MIPS assembly in SPIM:**
-   ```bash
-   spim -file output.s
-   ```
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-### Example Workflow
+## Authors
+
+- **Andru Tjalas**
+- **Tatum Hansen**
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## Support
+
+For issues, questions, or suggestions, please open an issue on GitHub.
+
+**Last Updated:** December 2025
+
+## Quick Start
+
+### Build and Run
 ```bash
+# Clone and navigate to the project
+cd c-minus-compiler
+
+# Build the compiler
 make
-./Compiler test.c output.s
+
+# Compile a source file to MIPS assembly
+./Compiler examples/hello.c output.s
+
+# Run the generated MIPS code
 spim -file output.s
 ```
 
-### Clean Build
+## Installation
+
+**See [INSTALLATION.md](INSTALLATION.md) for detailed setup instructions.**
+
+### Prerequisites
+- **GCC** - C compiler (v7.0+)
+- **Flex** - Lexer generator (v2.6+)
+- **Bison** - Parser generator (v3.0+)
+- **SPIM** - MIPS simulator (for executing output)
+
+### Platform Support
+- ✅ Linux
+- ✅ macOS
+- ✅ Windows (MinGW/Cygwin)
+
+### Building
 ```bash
-make clean
-make
+make           # Build the compiler
+make clean     # Remove build artifacts
+make test      # Run test suite
+```
+
+## Usage
+
+### Command-line Interface
+```bash
+./Compiler <source_file> <output_file>
+```
+
+**Parameters:**
+- `source_file` - Input .c file with custom language syntax
+- `output_file` - Output .s MIPS assembly file
+
+### Example
+```bash
+./Compiler program.c output.s
+spim -file output.s
+```
+
+### Compilation Pipeline
+```
+Source Code (.c)
+    ↓
+[Lexer] (Flex)
+    ↓
+Token Stream
+    ↓
+[Parser] (Bison)
+    ↓
+Abstract Syntax Tree (AST)
+    ↓
+[Semantic Analysis] (Symbol Table)
+    ↓
+[Intermediate Code Generation] (TAC)
+    ↓
+[Code Generator]
+    ↓
+MIPS Assembly (.s)
 ```
 
 ## Test Files Included
